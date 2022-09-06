@@ -9,16 +9,21 @@
                 <div class="col-sm-6">
                     <h1>@lang('lang.SETTING')</h1>
                 </div>
+
+                @if(!empty($accessArr['general_setting'][81]))
                 <div class="col-sm-6">
                     <div class="float-right mr-2">
-                        <a type="button" class="btn btn-success openCreateModal" data-toggle="modal" title="@lang('lang.VIEW_ISSUE')" data-target="#viewCreateModal"><i class="fa fa-plus-square"></i> @lang('lang.CREATE_SETTING')</a>
+                        <a type="button" class="btn btn-success openCreateModal" data-toggle="modal" title="@lang('lang.CREATE_SETTING')" data-target="#viewCreateModal"><i class="fa fa-plus-square"></i> @lang('lang.CREATE_SETTING')</a>
                     </div>
                 </div>
+                @endif
+
             </div>
             @include('backEnd.layouts.message')
         </div><!-- /.container-fluid -->
     </section>
 
+    @if(!empty($accessArr['general_setting'][83]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'setting.filter','method'=>'GET'])!!}
@@ -51,6 +56,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -86,23 +92,28 @@
                                         <td>{{$target->key_value}}</td>
                                         <td width='10%'>
                                             @if(!empty($target->image))
-                                             <img src="{{asset($target->image)}}" class="img-fluid" alt="no image"/>
+                                            <img src="{{asset($target->image)}}" class="img-fluid" alt="no image"/>
                                             @else
                                             {{''}}
-                                             @endif
-                                           
+                                            @endif
+
                                         </td>
                                         <td>{{Helper::dateFormat($target->created_at)}}</td>
                                         <td>
+                                            @if(!empty($accessArr['general_setting'][82]))
                                             <div style="float: left;margin-right:4px;">
                                                 <a type="button" class="btn btn-warning openEditModal" data-toggle="modal" title="@lang('lang.EDIT_ISSUE')" data-target="#viewEditModal" data-id="{{$target->id}}"><i class="fa fa-edit"></i></a>
                                             </div>
+                                            @endif
+
+                                            @if(!empty($accessArr['general_setting'][84]))
                                             <div style="float: left;">
                                                 {!!Form::open(['route'=>['setting.destroy',$target->id]])!!}
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger deleteBtn"><i class="fa fa-trash"></i></button>
                                                 {!!Form::close()!!}
-                                            </div>  
+                                            </div>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach

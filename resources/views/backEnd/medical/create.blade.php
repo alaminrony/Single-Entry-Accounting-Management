@@ -198,11 +198,13 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label>@lang('lang.REF')</label>
-                                        {!!Form::text('ref',old('ref'),['class'=>'form-control','id'=>'ref','placeholder'=>"Enter REF"])!!}
-                                        @if($errors->has('ref'))
-                                        <span class="text-danger">{{$errors->first('ref')}}</span>
-                                        @endif
+                                        <label>@lang('lang.REF_AGENT')</label>
+                                        <div class="input-group date"  data-target-input="nearest">
+                                            {!!Form::select('ref',$users,'',['class'=>'form-control select2','id'=>'ref','data-width'=>'80%','placeholder'=>"Enter REF"]) !!}
+                                            <div class="input-group-append">
+                                                <a type="button" class="input-group-text bg-secondary openUserCreateModal" data-toggle="modal" title="@lang('lang.VIEW_ISSUE')" data-target="#viewUserCreateModal"><i class="fa fa-plus-square"></i></a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -227,7 +229,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group row">
                                 <div class="col-md-10">
                                     <h4 style="text-align: center;margin-top: 0px;">Document Management</h4>
@@ -268,6 +270,13 @@
                 </div>
             </div>
     </section>
+</div>
+
+<div class="modal fade" id="viewUserCreateModal" tabindex="-1" role="basic" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div id="createModalShowData">
+        </div>
+    </div>
 </div>
 @endsection
 @push('script')
@@ -383,6 +392,67 @@
         $('#addBN').removeClass("active");
     });
 
+    $(document).on('click', '.openUserCreateModal', function () {
+        $.ajax({
+            url: "{{route('user.create')}}",
+            type: "post",
+            dataType: "json",
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (data) {
+//                console.log(data);return false;
+                $('#createModalShowData').html(data.data);
+            }
+        });
+    });
+    $(document).on('click', '#create', function () {
+        var data = new FormData($('#createFormData')[0]);
+        if (data != '') {
+            $.ajax({
+                url: "{{route('user.store')}}",
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (data) {
+                    $("#name_error").text('');
+                    $("#role_id_error").text('');
+                    $("#email_error").text('');
+                    $("#phone_error").text('');
+                    $("#password_error").text('');
+                    $("#balance_error").text('');
+                    $("#profile_photo_error").text('');
+                    $("#address_error").text('');
+                    if (data.errors) {
+                        $("#name_error").text(data.errors.name);
+                        $("#role_id_error").text(data.errors.role_id);
+                        $("#email_error").text(data.errors.email);
+                        $("#phone_error").text(data.errors.phone);
+                        $("#password_error").text(data.errors.password);
+                        $("#balance_error").text(data.errors.balance);
+                        $("#profile_photo_error").text(data.errors.profile_photo);
+                        $("#address_error").text(data.errors.address);
+                    }
+                    if (data.response == "success") {
+//                        setTimeout(function () {
+//                            location.reload();
+//                        }, 1000);
+                        $('#viewUserCreateModal').modal('hide');
+                        toastr.success("@lang('lang.USER_CREATED_SUCCESSFULLY')", 'Success', {timeOut: 5000});
+                        // Create a DOM Option and pre-select by default
+                        var newOption = new Option(data.name, data.id, true, true);
+                        // Append it to the select
+                        $('#User').append(newOption).trigger('change');
+                    }
+                }
+            });
+        }
+    });
 </script>
 @endpush
 

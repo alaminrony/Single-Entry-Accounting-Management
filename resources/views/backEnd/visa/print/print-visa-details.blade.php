@@ -88,14 +88,14 @@
                 @if(!empty($target->passport_issue_date))
                 <tr>
                     <td><strong>@lang('lang.PASSPORT_ISSUE_DATE')</strong> </td>
-                    <td>{{Helper::dateFormat2($target->passport_issue_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_issue_date) ?? ''}}</td>
                 </tr>
                 @endif
 
                 @if(!empty($target->passport_recieve_date))
                 <tr>
                     <td><strong>@lang('lang.PASSPORT_RECEIVE_DATE')</strong> </td>
-                    <td>{{Helper::dateFormat2($target->passport_recieve_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_recieve_date) ?? ''}}</td>
                 </tr>
                 @endif
 
@@ -249,13 +249,6 @@
                 @endif
 
 
-                @if(!empty($target->delivery_date))
-                <tr>
-                    <td><strong>@lang('lang.DELIVERY_DATE')</strong> </td>
-                    <td>{{Helper::dateFormat2($target->delivery_date)}}</td>
-                </tr>
-                @endif
-
                 @if(!empty($target->man_power_submit_date))
                 <tr>
                     <td><strong>@lang('lang.MAN_POWER_SUBMIT_DATE')</strong> </td>
@@ -362,7 +355,7 @@
                 @if(!empty($target->ref_agent))
                 <tr>
                     <td><strong>@lang('lang.REF_AGENT')</strong> </td>
-                    <td>{{$target->ref_agent}}</td>
+                    <td>{{$users[$target->ref_agent] ?? ''}}</td>
                 </tr>
                 @endif
 

@@ -117,11 +117,13 @@
 
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>@lang('lang.AGENT')</label>
-                                        {!!Form::text('agent',!empty($target->agent) ? $target->agent : old('agent'),['class'=>'form-control','id'=>'agent','placeholder'=>"Enter egent"])!!}
-                                        @if($errors->has('agent'))
-                                        <span class="text-danger">{{$errors->first('agent')}}</span>
-                                        @endif
+                                        <label>@lang('lang.REF_AGENT')</label>
+                                        <div class="input-group date"  data-target-input="nearest">
+                                            {!!Form::select('agent',$users,!empty($target->agent) ? $target->agent : old('agent'),['class'=>'form-control select2','id'=>'User','data-width'=>'80%']) !!}
+                                            <div class="input-group-append">
+                                                <a type="button" class="input-group-text bg-secondary openUserCreateModal" data-toggle="modal" title="@lang('lang.CREATE')" data-target="#viewUserCreateModal"><i class="fa fa-plus-square"></i></a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -224,7 +226,7 @@
                                     <div class="form-group">
                                         <label>@lang('lang.TAX')</label>
                                         <div class="input-group" id="landing_time" data-target-input="nearest">
-                                            {!!Form::number('tax',!empty($target->tax) ? $target->tax : '',['class'=>'form-control','id'=>'tax'])!!}
+                                            {!!Form::text('tax',!empty($target->tax) ? $target->tax : '',['class'=>'form-control','id'=>'tax'])!!}
                                             {!!Form::select('tax_type',['1'=>'TK','2'=>'%'],!empty($target->tax_type) ? $target->tax_type : '',['class'=>'input-group-append','id'=>'taxTypeId'])!!}
                                         </div>
                                         @if($errors->has('tax'))
@@ -273,6 +275,16 @@
                                         </div>
                                         @if($errors->has('commission'))
                                         <span class="text-danger">{{$errors->first('commission')}}</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>@lang('lang.SERVICE_CHARGE')</label>
+                                        {!!Form::text('service_charge',$target->service_charge ?? old('service_charge'),['class'=>'form-control','id'=>'serviceCharge'])!!}
+                                        @if($errors->has('service_charge'))
+                                        <span class="text-danger">{{$errors->first('service_charge')}}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -336,7 +348,7 @@
                                                 @endforeach
                                                 @else
                                                 <tr class="numbar">
-                                                         <!--<td width='10%'><img id="blah0" class="img-thambnail" src="http://demo.kefuclav.com/assets/dist/img/products/product.png" alt="your image" height="70px" width="70px;"></td>-->
+                                                    <td width='10%'><img id="blah0" class="img-thambnail" src="{{asset('backend/dist/img/no_file.png')}}" alt="No file image" height="70px" width="70px;"></td>
                                                     <td><input type="file" name="doc_name[]"></td>
                                                     <td><input type="text" name="title[]" value="" placeholder="Enter Caption" class="form-control"></td>
                                                     <td><input type="number" name="serial[]" value="1" class="form-control" required></td>
@@ -351,7 +363,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="card-footer">
                                 <a href="{{route('ticketEntry.index')}}" class="btn btn-default">Cancel</a>
                                 <button type="submit" class="btn btn-info float-right">Update</button>
@@ -363,6 +374,13 @@
                 </div>
             </div>
     </section>
+</div>
+
+<div class="modal fade" id="viewUserCreateModal" tabindex="-1" role="basic" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div id="createModalShowData">
+        </div>
+    </div>
 </div>
 @endsection
 @push('script')
@@ -529,7 +547,40 @@
         }
     });
 
+    $(document).on('keyup', '#serviceCharge', function () {
+        var serviceCharge = parseFloat($(this).val());
+        var netFare = parseFloat($('#netFare').val());
+        if (!isNaN(serviceCharge)) {
+            totalNetFare(serviceCharge);
+        } else {
+            totalNetFare();
+        }
+    });
 
+    function totalNetFare(serviceCharge = 0) {
+        var CommissionType = $('#CommissionType').val();
+        var commission = parseFloat($('#Commission').val());
+        var fare = parseFloat($('#fare').val());
+        var fareWithTax = parseFloat($('#fareWithTax').val());
+        var aitTax = parseFloat($('#aitTax').val());
+
+        if (CommissionType == '1') {
+            var netFare = (fareWithTax + aitTax) - commission;
+            if (!isNaN(netFare)) {
+                $('#netFare').val(netFare + serviceCharge);
+            } else {
+                $('#netFare').val('');
+            }
+        } else if (CommissionType == '2') {
+            var commissionConvertedByTk = (commission * fare) / 100;
+            var netFare = (fareWithTax + aitTax) - commissionConvertedByTk;
+            if (!isNaN(netFare)) {
+                $('#netFare').val(netFare + serviceCharge);
+            } else {
+                $('#netFare').val('');
+            }
+    }
+    }
 </script>
 
 <script type="text/javascript">
@@ -538,7 +589,7 @@
 //        alert(i);return false;
         i++;
         $('#dynamic_field_file').append('<tr id="row' + i + '">' +
-                '<td><img id="blah' + i + '" class="img-thambnail" src="{{asset('backend / dist / img / file.jpg')}}" alt="your image" height="70px" width="70px;"></td>' +
+                '<td><img id="blah' + i + '" class="img-thambnail" src="{{asset('backend / dist / img / no_file.png')}}" alt="No file image" height="70px" width="70px;"></td>' +
                 '<td><input type="file" name="doc_name[' + i + ']" onchange="document.getElementById(`blah${i}`).src = window.URL.createObjectURL(this.files[0])"></td>' +
                 '<td><input type="text" name="title[' + i + ']" value="" placeholder="Enter Caption" class="form-control"></td>' +
                 '<td><input type="number" name="serial[' + i + ']" class="form-control" value="" required></td>' +
@@ -550,6 +601,70 @@
         var button_id = $(this).attr("id");
         $('#row' + button_id + '').remove();
     });
+
+    $(document).on('click', '.openUserCreateModal', function () {
+        $.ajax({
+            url: "{{route('user.create')}}",
+            type: "post",
+            dataType: "json",
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (data) {
+//                console.log(data);return false;
+                $('#createModalShowData').html(data.data);
+            }
+        });
+    });
+    $(document).on('click', '#create', function () {
+        var data = new FormData($('#createFormData')[0]);
+        if (data != '') {
+            $.ajax({
+                url: "{{route('user.store')}}",
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (data) {
+                    $("#name_error").text('');
+                    $("#role_id_error").text('');
+                    $("#email_error").text('');
+                    $("#phone_error").text('');
+                    $("#password_error").text('');
+                    $("#balance_error").text('');
+                    $("#profile_photo_error").text('');
+                    $("#address_error").text('');
+                    if (data.errors) {
+                        $("#name_error").text(data.errors.name);
+                        $("#role_id_error").text(data.errors.role_id);
+                        $("#email_error").text(data.errors.email);
+                        $("#phone_error").text(data.errors.phone);
+                        $("#password_error").text(data.errors.password);
+                        $("#balance_error").text(data.errors.balance);
+                        $("#profile_photo_error").text(data.errors.profile_photo);
+                        $("#address_error").text(data.errors.address);
+                    }
+                    if (data.response == "success") {
+//                        setTimeout(function () {
+//                            location.reload();
+//                        }, 1000);
+                        $('#viewUserCreateModal').modal('hide');
+                        toastr.success("@lang('lang.USER_CREATED_SUCCESSFULLY')", 'Success', {timeOut: 5000});
+                        // Create a DOM Option and pre-select by default
+                        var newOption = new Option(data.name, data.id, true, true);
+                        // Append it to the select
+                        $('#User').append(newOption).trigger('change');
+                    }
+                }
+            });
+        }
+    });
+
+
     const lb = lightbox();
 </script>
 @endpush

@@ -159,7 +159,7 @@
             <div class="form-group row">
                 <label for="user_id" class="col-sm-4 col-form-label">@lang('lang.PARTY') :</label>
                 <div class="input-group date col-md-8"  data-target-input="nearest">
-                    {!!Form::select('user_id',$users,'',['class'=>'form-control','id'=>'User']) !!}
+                    {!!Form::select('user_id',$users,'',['class'=>'form-control select2','id'=>'User']) !!}
                     <div class="input-group-append">
                         <a type="button" class="input-group-text bg-secondary openUserCreateModal" data-toggle="modal" title="@lang('lang.VIEW_ISSUE')" data-target="#viewUserCreateModal"><i class="fa fa-plus-square"></i></a>
                     </div>

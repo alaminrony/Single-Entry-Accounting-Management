@@ -95,9 +95,6 @@
                                         </tr>
                                         @endif
 
-
-
-
                                         @if(!empty($target->fit_date))
                                         <tr>
                                             <td><strong>@lang('lang.FIT_DATE')</strong> </td>
@@ -141,7 +138,7 @@
                                         @if(!empty($target->ref))
                                         <tr>
                                             <td><strong>@lang('lang.REF')</strong> </td>
-                                            <td>{{$target->ref}}</td>
+                                            <td>{{$users[$target->ref] ?? ''}}</td>
                                         </tr>
                                         @endif
 

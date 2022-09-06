@@ -109,7 +109,7 @@
                 @if(!empty($target->UNFIT_DATE))
                 <tr>
                     <td><strong>@lang('lang.UNFIT_DATE')</strong> </td>
-                    <td>{{Helper::dateFormat2($target->UNFIT_DATE)}}</td>
+                    <td>{{Helper::dateFormat2($target->unfit_date)}}</td>
                 </tr>
                 @endif
 
@@ -142,7 +142,7 @@
                 @if(!empty($target->ref))
                 <tr>
                     <td><strong>@lang('lang.REF')</strong> </td>
-                    <td>{{$target->ref}}</td>
+                    <td>{{$users[$target->ref] ?? ''}}</td>
                 </tr>
                 @endif
 
@@ -170,9 +170,9 @@
     </body>
     <script src="{{asset('backend/plugins/jquery/jquery.min.js')}}" type="text/javascript"></script>
     <script>
-    $(document).ready(function () {
-        window.print();
-    });
+$(document).ready(function () {
+    window.print();
+});
     </script>
 </html>
 @endif

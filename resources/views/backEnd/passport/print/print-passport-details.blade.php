@@ -53,7 +53,7 @@
                 @if(!empty($target->type_id))
                 <tr>
                     <td><strong>@lang('lang.ENTRY_TYPE')</strong> </td>
-                    <td>{{$entryTypes[$target->type_id]}}</td>
+                    <td>{{$entryTypes[$target->type_id] ?? ''}}</td>
                 </tr>
                 @endif
 
@@ -249,10 +249,17 @@
                 @endif
 
 
-                @if(!empty($target->delivery_date))
+                @if(!empty($target->dob))
                 <tr>
-                    <td><strong>@lang('lang.DELIVERY_DATE')</strong> </td>
-                    <td>{{Helper::dateFormat2($target->delivery_date)}}</td>
+                    <td><strong>@lang('lang.DATE_OF_BIRTH')</strong> </td>
+                    <td>{{Helper::dateFormat2($target->dob)}}</td>
+                </tr>
+                @endif
+
+                @if(!empty($target->nid_no))
+                <tr>
+                    <td><strong>@lang('lang.NID')</strong> </td>
+                    <td>{{$target->nid_no}}</td>
                 </tr>
                 @endif
 

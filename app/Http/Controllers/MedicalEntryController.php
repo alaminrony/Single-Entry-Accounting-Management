@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\BankAccount;
@@ -18,6 +17,7 @@ use App\Models\User;
 use App\Models\Issue;
 use App\Models\Transaction;
 use App\Models\DocumentAttachment;
+use App\Models\Invoice;
 use Session;
 use DB;
 use App\Helpers\Helper;
@@ -29,12 +29,13 @@ class MedicalEntryController extends Controller {
 
     public function index(Request $request) {
 //        echo "<pre>";print_r($request->all());exit;
-        $banksArr = ['' => __('lang.SELECT_BANK')] + BankAccount::pluck('bank_name', 'id')->toArray();
-        $targets = MedicalApplication::select('id', 'customer_code', 'name', 'passport_no', 'contact_no', 'created_at')->orderBy('id', 'desc');
+        $users = ['' => __('lang.SELECT_USER')] + User::join('medical_applications', 'medical_applications.created_by', '=', 'users.id')->select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
+        $countries = Country::select(DB::raw("CONCAT(name,' (',iso_code_2,')') as country_name"), 'id')->pluck('country_name', 'id')->toArray();
+        $entryTypes = EntryTypes::where('status', '1')->where('category_id', '3')->pluck('title', 'id')->toArray();
+        $years = Year::pluck('year', 'year')->toArray();
 
-//        if (!empty($request->transaction_type)) {
-//            $targets = $targets->where('transaction_type', $request->transaction_type);
-//        }
+        $targets = MedicalApplication::select('*')->orderBy('id', 'desc');
+        
         if (!empty($request->search_value)) {
             $searchText = $request->search_value;
             $targets->where(function ($query) use ($searchText) {
@@ -43,6 +44,14 @@ class MedicalEntryController extends Controller {
                         ->orWhere('passport_no', 'like', "%{$searchText}%")
                         ->orWhere('contact_no', 'like', "%{$searchText}%");
             });
+        }
+
+        if (!empty($request->expiry_date) && !empty($request->from_date) && !empty($request->to_date)) {
+            $targets = $targets->whereBetween($request->expiry_date, [$request->from_date . ' 00:00:00', $request->to_date . ' 23:59:59']);
+        }
+
+        if (!empty($request->created_by)) {
+            $targets->where('created_by', $request->created_by);
         }
 
         if ($request->view == 'print') {
@@ -62,44 +71,41 @@ class MedicalEntryController extends Controller {
             $downLoadFileName = "$fileName.xlsx";
             $data['targets'] = $targets;
             $data['request'] = $request;
+            $data['countries'] = $countries;
+            $data['entryTypes'] = $entryTypes;
+            $data['years'] = $years;
+            $data['users'] = $users;
             return Excel::download(new ExcelExport($viewFile, $data), $downLoadFileName);
         }
+        $targets = $targets->paginate(10);
 
-
-        $targets = $targets->paginate(5);
-
+        $expiryDateArr = ['' => __('lang.SELECT_EXPIRY_DATE')] + [
+            'created_at' => 'Created At',
+            'passport_expiry_date' => 'Passport expiry date',
+        ];
 
         $data['title'] = 'Medical List';
         $data['meta_tag'] = 'Medical List, rafiq & sons';
         $data['meta_description'] = 'Medical List, rafiq & sons';
 
-        return view('backEnd.medical.index')->with(compact('data', 'targets'));
+        return view('backEnd.medical.index')->with(compact('data', 'targets', 'users', 'expiryDateArr'));
     }
 
     public function create(Request $request) {
-
+        $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $countries = ['' => __('lang.SELECT_COUNTRY')] + Country::select(DB::raw("CONCAT(name,' (',iso_code_2,')') as country_name"), 'id')->pluck('country_name', 'id')->toArray();
-
         $entryTypes = ['' => __('lang.SELECT_ENTRY_TYPE')] + EntryTypes::where('status', '1')->where('category_id', '3')->pluck('title', 'id')->toArray();
-
         $years = ['' => __('lang.SELECT_YEAR')] + Year::pluck('year', 'year')->toArray();
-
         $airports = ['' => __('lang.SELECT_AIRPORT')] + Airport::select(DB::raw("CONCAT(name,' (',countryCode,')') as name"), 'countryCode', 'code')->orderBy('countryCode')->pluck('name', 'name')->toArray();
-
         $districts = ['' => __('lang.SELECT_DISTRICT')] + District::orderBy('name')->pluck('name', 'id')->toArray();
-
         $thanas = ['' => __('lang.SELECT_THANA')] + Thana::orderBy('name')->pluck('name', 'id')->toArray();
-
 
         if (!empty($request->countryId) && !empty($request->typeId) && !empty($request->year)) {
             $type = explode(' ', $entryTypes[$request->typeId]);
             $year = $years[$request->year];
             $countryName = explode(' ', str_replace(array('(', ')'), '', $countries[$request->countryId]));
-
-            $latestPassport = MedicalApplication::select('id')->latest()->take(1)->first();
-
-            $latestPassId = !empty($latestPassport->id) ? $latestPassport->id + 1 : '1';
-
+            $latestPassport = MedicalApplication::where('country_id', $request->countryId)->count();
+            $latestPassId = $latestPassport == 0 ? 1 : $latestPassport + 1;
             $customerCode = end($countryName) . '-' . $type[0] . '-' . $year . '-' . $latestPassId;
             return $customerCode;
         }
@@ -108,7 +114,7 @@ class MedicalEntryController extends Controller {
         $data['meta_tag'] = 'Medical entry, rafiq & sons';
         $data['meta_description'] = 'Medical entry, rafiq & sons';
 
-        return view('backEnd.medical.create', compact('data', 'countries', 'entryTypes', 'years', 'airports', 'districts', 'thanas'));
+        return view('backEnd.medical.create', compact('data', 'countries', 'entryTypes', 'years', 'airports', 'districts', 'thanas', 'users'));
     }
 
     public function generateCusCode(Request $request) {
@@ -161,13 +167,17 @@ class MedicalEntryController extends Controller {
         $target->contact_person = $request->contact_person;
         $target->contact_purpose = $request->contact_purpose;
         if ($target->save()) {
-//            if (!empty($request->note)) {
-//                $notes = new Note;
-//                $notes->application_id = $target->id;
-//                $notes->issue_id = 2;
-//                $notes->note = $request->note;
-//                $notes->save();
-//            }
+            $data = [
+                'issue_type' => 'medical',
+                'issue_id' => $target->id,
+                'action' => 'create',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::log($data);
+
             $this->uploadFile($target->id, $request);
             Session::flash('success', __('lang.MEDICAL_ADDED_SUCCESSFULLY'));
             return redirect()->route('medicalEntry.index');
@@ -176,10 +186,11 @@ class MedicalEntryController extends Controller {
 
     public function view(Request $request) {
 
-        $target = MedicalApplication::findOrFail($request->id);
+        $target = MedicalApplication::with('attachments')->findOrFail($request->id);
 
 //        echo "<pre>";print_r($target->toArray());exit;
 //        $notes = Note::where('application_id', $request->id)->where('issue_id', '3')->get();
+        $users = ['' => __('lang.SELECT_USER')] + User::select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
 
         $countries = Country::select(DB::raw("CONCAT(name,' (',iso_code_2,')') as country_name"), 'id')->pluck('country_name', 'id')->toArray();
 
@@ -204,20 +215,18 @@ class MedicalEntryController extends Controller {
             $data['countries'] = $countries;
             $data['entryTypes'] = $entryTypes;
             $data['years'] = $years;
+            $data['users'] = $users;
             return Excel::download(new ExcelExport($viewFile, $data), $downLoadFileName);
         }
-
-
-
         $data['title'] = 'View Medical';
         $data['meta_tag'] = 'View Medical, rafiq & sons';
         $data['meta_description'] = 'View Medical, rafiq & sons';
-        return view('backEnd.medical.view')->with(compact('target', 'data', 'countries', 'entryTypes', 'years'));
+        return view('backEnd.medical.view')->with(compact('target', 'data', 'countries', 'entryTypes', 'years', 'users'));
     }
 
     public function edit(Request $request) {
-
-        $target = MedicalApplication::findOrFail($request->id);
+        $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
+        $target = MedicalApplication::with('attachments')->findOrFail($request->id);
 
         $notes = Note::where('application_id', $request->id)->where('issue_id', '2')->get();
 
@@ -227,12 +236,10 @@ class MedicalEntryController extends Controller {
 
         $years = ['' => __('lang.SELECT_YEAR')] + Year::pluck('year', 'year')->toArray();
 
-
-
         $data['title'] = 'Edit Medical';
         $data['meta_tag'] = 'Edit Medical, rafiq & sons';
         $data['meta_description'] = 'Edit Medical, rafiq & sons';
-        return view('backEnd.medical.edit')->with(compact('target', 'data', 'countries', 'entryTypes', 'years'));
+        return view('backEnd.medical.edit')->with(compact('target', 'data', 'countries', 'entryTypes', 'years', 'users'));
     }
 
     public function update(Request $request) {
@@ -243,8 +250,6 @@ class MedicalEntryController extends Controller {
             'year' => 'required',
             'customer_code' => 'required',
             'name' => 'required',
-//            'passport_no' => 'required',
-//            'contact_no' => 'required|numeric',
         ];
 
         if (!empty($request->passport_issue_date) && !empty($request->passport_expiry_date)) {
@@ -277,21 +282,22 @@ class MedicalEntryController extends Controller {
         $target->contact_person = $request->contact_person;
         $target->contact_purpose = $request->contact_purpose;
         if ($target->save()) {
-//            if (count($request->note) > 0) {
-//                $notes = Note::where('application_id', $target->id)->where('issue_id', '2')->delete();
-//                $noteData = [];
-//                $i = 0;
-//                foreach ($request->note as $note) {
-//                    if (!empty($note)) {
-//                        $noteData[$i]['application_id'] = $target->id;
-//                        $noteData[$i]['issue_id'] = 2;
-//                        $noteData[$i]['note'] = $note;
-//                        $i++;
-//                    }
-//                }
-//                Note::insert($noteData);
-//            }
-            $this->uploadImageForUpdate($target, $request);
+            $data = [
+                'issue_type' => 'medical',
+                'issue_id' => $target->id,
+                'action' => 'update',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::log($data);
+
+            if (!empty($target->attachments->toArray())) {
+                $this->uploadImageForUpdate($target, $request);
+            } else {
+                $this->uploadFile($target->id, $request);
+            }
             Session::flash('success', __('lang.MEDICAL_UPDATED_SUCCESSFULLY'));
             return redirect()->route('medicalEntry.index');
         }
@@ -300,6 +306,16 @@ class MedicalEntryController extends Controller {
     public function destroy(Request $request) {
         $target = MedicalApplication::findOrFail($request->id);
         if ($target->delete()) {
+            $data = [
+                'issue_type' => 'medical',
+                'issue_id' => $target->id,
+                'action' => 'delete',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::log($data);
 //            $notes = Note::where('application_id', $request->id)->where('issue_id', '2')->delete();
             Session::flash('success', __('lang.MEDICAL_DELETED_SUCCESSFULLY'));
             return redirect()->route('medicalEntry.index');
@@ -307,7 +323,7 @@ class MedicalEntryController extends Controller {
     }
 
     public function transactionList(Request $request) {
-
+        $createdBy = ['' => __('lang.SELECT_CREATED_BY')] + User::join('transactions', 'transactions.created_by', '=', 'users.id')->select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->where('transactions.issue_id', 3)->pluck('name', 'id')->toArray();
         $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $transactionTypeArr = ['' => __('lang.SELECT_TR_TYPE'), 'in' => 'Cash In', 'out' => 'Cash Out'];
         $bankAccountArr = BankAccount::select(DB::raw("CONCAT(bank_name,' => ',account_name,' (',account_no,')') as bank_account"), 'id')->pluck('bank_account', 'id')->toArray();
@@ -362,29 +378,19 @@ class MedicalEntryController extends Controller {
 
         $targets = $targets->paginate(5);
 
-
         $application_id = $request->id;
         $transactionListOf = 'medical-entry';
         $issue_id = '3';
         $searchFormRoute = 'medicalEntry.filter';
+        $searchCreatedBy = 'medicalEntry.createdBy';
 
         $applicationDetails = MedicalApplication::select('customer_code', 'name', 'passport_no')->where('id', $request->id)->first();
         $data['title'] = 'Transaction';
         $data['meta_tag'] = 'Transaction page, rafiq & sons';
         $data['meta_description'] = 'Transaction, rafiq & sons';
-        return view('backEnd.transaction.index')->with(compact('targets', 'issues', 'bankAccountArr', 'users', 'transactionTypeArr', 'data', 'application_id', 'total_transaction', 'total_in', 'total_out', 'total_profit', 'issue_id', 'applicationDetails', 'searchFormRoute', 'transactionListOf'));
+        return view('backEnd.transaction.index')->with(compact('targets', 'issues', 'bankAccountArr', 'users', 'transactionTypeArr', 'data', 'application_id', 'total_transaction', 'total_in', 'total_out', 'total_profit', 'issue_id', 'applicationDetails', 'searchFormRoute', 'transactionListOf', 'createdBy', 'searchCreatedBy'));
     }
 
-    public function filter(Request $request) {
-        $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
-        return redirect('admin/medical-entry/' . $request->id . '/transaction-list?' . $url);
-    }
-
-    public function medicalFilter(Request $request) {
-        $url = 'filter=true' . '&search_value=' . $request->search_value;
-        return redirect('admin/medical-entry?' . $url);
-    }
-    
     public function uploadImageForUpdate($target, $request) {
 //        echo "<pre>";print_r($request->all());exit;
         $preFileArr = [];
@@ -431,8 +437,7 @@ class MedicalEntryController extends Controller {
             return true;
         }
     }
-    
-    
+
     public function uploadFile($applicationId, $request) {
 //        echo "<pre>";print_r($request->all());exit;
         if ($files = $request->file('doc_name')) {
@@ -446,7 +451,7 @@ class MedicalEntryController extends Controller {
                 $target->issue_type = 3;
                 $target->application_id = $applicationId;
                 $target->doc_name = $dbName;
-                $target->title = $raquest->title[$key] ?? '';
+                $target->title = $request->title[$key] ?? '';
                 $target->serial = $request->serial[$key] ?? 0;
                 $target->status = $request->status[$key] ?? 0;
                 $target->save();
@@ -455,6 +460,50 @@ class MedicalEntryController extends Controller {
         return true;
     }
 
+    public function filter(Request $request) {
+        if (isset($request->created_by)) {
+            $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value . '&created_by=' . $request->created_by;
+        } else {
+            $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
+        }
+        return redirect('admin/medical-entry/' . $request->id . '/transaction-list?' . $url);
+    }
 
+    public function medicalFilter(Request $request) {
+        $rules = [
+            'from_date' => 'required_with:to_date',
+            'to_date' => 'required_with:from_date',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withInput()->withErrors($validator);
+        }
+
+        if (isset($request->created_by)) {
+            $url = 'filter=true' . '&expiry_date=' . $request->expiry_date . '&created_by=' . $request->created_by . '&search_value=' . $request->search_value . '&from_date=' . $request->from_date . '$to_date=' . $request->to_date;
+        } else {
+            $url = 'filter=true' . '&expiry_date=' . $request->expiry_date . '&search_value=' . $request->search_value . '&from_date=' . $request->from_date . '&to_date=' . $request->to_date;
+        }
+        return redirect('admin/medical-entry?' . $url);
+    }
+
+    public function combineReport(Request $request) {
+        $applicationDetails = MedicalApplication::select('customer_code', 'name', 'passport_no')->where('id', $request->id)->first();
+        $invoices = Invoice::where('customer_code', $applicationDetails->customer_code)->where('issue_id', '3')->get();
+        $transactions = Transaction::where(['issue_id' => '3', 'application_id' => $request->id])->get();
+        $users = ['' => __('lang.SELECT_USER')] + User::select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
+ 
+
+        $application_id = $request->id;
+        $transactionListOf = 'visa-entry';
+        $issue_id = '3';
+
+        $data['title'] = 'Combine Report';
+        $data['meta_tag'] = 'Combine Report page, rafiq & sons';
+        $data['meta_description'] = 'Combine Report, rafiq & sons';
+        return view('backEnd.report.combine_report')->with(compact('invoices', 'transactions','users' ,'data', 'application_id', 'issue_id', 'applicationDetails','transactionListOf'));
+    }
 
 }

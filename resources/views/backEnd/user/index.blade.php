@@ -10,17 +10,19 @@
                 <div class="col-sm-6">
                     <h1>@lang('lang.USER')</h1>
                 </div>
-
+                @if(!empty($accessArr['user'][2]))
                 <div class="col-sm-6">
                     <div class="float-right mr-2">
                         <a type="button" class="btn btn-success openCreateModal" data-toggle="modal" title="@lang('lang.VIEW_ISSUE')" data-target="#viewCreateModal"><i class="fa fa-plus-square"></i> Create user</a>
                     </div>
                 </div>
+                @endif
             </div>
             @include('backEnd.layouts.message')
-        </div><!-- /.container-fluid -->
+        </div>
     </section>
 
+    @if(!empty($accessArr['user'][5]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'user.filter','method'=>'GET'])!!}
@@ -73,6 +75,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -116,16 +119,25 @@
                                         <td>{{Helper::dateFormat($target->created_at)}}</td>
                                         <td width='18%'>
                                             <div style="float: left;margin-right:4px;">
+                                                @if(!empty($accessArr['user'][6]))
                                                 <a type="button" class="btn btn-success btn-sm openViewModal" data-toggle="modal" title="@lang('lang.VIEW_USER')" data-target="#viewModal" data-id="{{$target->id}}"><i class="fa fa-eye"></i></a>
+                                                @endif
+                                                @if(!empty($accessArr['user'][7]))
                                                 <a href="{{route('user.transaction',$target->id)}}" class="btn btn-primary btn-sm"  title="@lang('lang.TRANSACTION_LIST')"><i class="fa fa-exchange-alt"></i></a>
+                                                @endif
+                                                @if(!empty($accessArr['user'][3]))
                                                 <a type="button" class="btn btn-warning btn-sm openEditModal" data-toggle="modal" title="@lang('lang.EDIT')" data-target="#viewEditModal" data-id="{{$target->id}}"><i class="fa fa-edit"></i></a>
+                                                @endif
                                             </div>
+
+                                            @if(!empty($accessArr['user'][4]))
                                             <div style="float: left;">
                                                 {!!Form::open(['route'=>['user.destroy',$target->id]])!!}
                                                 @method('DELETE')
                                                 <button type="submit" title="@lang('lang.DELETE')" class="btn btn-danger btn-sm deleteBtn"><i class="fa fa-trash"></i></button>
                                                 {!!Form::close()!!}
-                                            </div> 
+                                            </div>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -176,171 +188,168 @@
 <script type="text/javascript">
     $(document).ready(function () {
         $('.select2').select2();
+    });
+    $(document).on('click', '.openCreateModal', function () {
+        $.ajax({
+            url: "{{route('user.create')}}",
+            type: "post",
+            dataType: "json",
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (data) {
+                $('#CreateModalShow').html(data.data);
+            }
+        });
+    });
 
-        $(document).on('click', '.openCreateModal', function () {
+    $(document).on('click', '#create', function () {
+        var data = new FormData($('#createFormData')[0]);
+        if (data != '') {
             $.ajax({
-                url: "{{route('user.create')}}",
+                url: "{{route('user.store')}}",
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (data) {
+                    $("#name_error").text('');
+                    $("#role_id_error").text('');
+                    $("#email_error").text('');
+                    $("#phone_error").text('');
+                    $("#password_error").text('');
+                    $("#balance_error").text('');
+                    $("#profile_photo_error").text('');
+                    $("#address_error").text('');
+                    if (data.errors) {
+                        $("#name_error").text(data.errors.name);
+                        $("#role_id_error").text(data.errors.role_id);
+                        $("#email_error").text(data.errors.email);
+                        $("#phone_error").text(data.errors.phone);
+                        $("#password_error").text(data.errors.password);
+                        $("#balance_error").text(data.errors.balance);
+                        $("#profile_photo_error").text(data.errors.profile_photo);
+                        $("#address_error").text(data.errors.address);
+                    }
+                    if (data.response == "success") {
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
+                        $('#viewCreateModal').modal('hide');
+                        toastr.success("@lang('lang.USER_CREATED_SUCCESSFULLY')", 'Success', {timeOut: 5000});
+//                            toastr["success"]("@lang('label.MEET_UP_HAS_BEEN_UPDATED_SUCCESSFULLY')");
+                    }
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '.openEditModal', function () {
+        var id = $(this).attr('data-id');
+        if (id != '') {
+            $.ajax({
+                url: "{{route('user.edit')}}",
                 type: "post",
+                data: {id: id},
                 dataType: "json",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function (data) {
-                    $('#CreateModalShow').html(data.data);
+                    $('#editModalShow').html(data.data);
                 }
             });
-        });
+        }
+    });
 
-        $(document).on('click', '#create', function () {
-            var data = new FormData($('#createFormData')[0]);
-            if (data != '') {
-                $.ajax({
-                    url: "{{route('user.store')}}",
-                    data: data,
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    type: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        $("#name_error").text('');
-                        $("#role_id_error").text('');
-                        $("#email_error").text('');
-                        $("#phone_error").text('');
-                        $("#password_error").text('');
-                        $("#balance_error").text('');
-                        $("#profile_photo_error").text('');
-                        $("#address_error").text('');
-                        if (data.errors) {
-                            $("#name_error").text(data.errors.name);
-                            $("#role_id_error").text(data.errors.role_id);
-                            $("#email_error").text(data.errors.email);
-                            $("#phone_error").text(data.errors.phone);
-                            $("#password_error").text(data.errors.password);
-                            $("#balance_error").text(data.errors.balance);
-                            $("#profile_photo_error").text(data.errors.profile_photo);
-                            $("#address_error").text(data.errors.address);
-                        }
-                        if (data.response == "success") {
-                            setTimeout(function () {
-                                location.reload();
-                            }, 1000);
-                            $('#viewCreateModal').modal('hide');
-                            toastr.success("@lang('lang.USER_CREATED_SUCCESSFULLY')", 'Success', {timeOut: 5000});
+    $(document).on('click', '#update', function () {
+        var data = new FormData($('#editFormData')[0]);
+        if (data != '') {
+            $.ajax({
+                url: "{{route('user.update')}}",
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (data) {
+                    $("#name_error").text('');
+                    $("#role_id_error").text('');
+                    $("#email_error").text('');
+                    $("#phone_error").text('');
+                    $("#password_error").text('');
+                    $("#profile_photo_error").text('');
+                    $("#address_error").text('');
+                    if (data.errors) {
+                        $("#name_error").text(data.errors.name);
+                        $("#role_id_error").text(data.errors.role_id);
+                        $("#email_error").text(data.errors.email);
+                        $("#phone_error").text(data.errors.phone);
+                        $("#password_error").text(data.errors.password);
+                        $("#profile_photo_error").text(data.errors.profile_photo);
+                        $("#address_error").text(data.errors.address);
+                    }
+                    if (data.response == "success") {
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
+                        $('#viewEditModal').modal('hide');
+                        toastr.success("@lang('lang.USER_UPDATED_SUCCESSFULLY')", 'Success', {timeOut: 5000});
 //                            toastr["success"]("@lang('label.MEET_UP_HAS_BEEN_UPDATED_SUCCESSFULLY')");
-                        }
+                    }
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '.openViewModal', function () {
+        var id = $(this).attr('data-id');
+        if (id != '') {
+            $.ajax({
+                url: "{{route('user.view')}}",
+                type: "post",
+                data: {id: id},
+                dataType: "json",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (data) {
+                    $('#viewModalShow').html(data.data);
+                }
+            });
+        }
+    });
+
+
+    $('.deleteBtn').on('click', function (e) {
+        event.preventDefault();
+        var form = $(this).closest('form');
+        swal({
+            title: "Are you sure?",
+            text: "You want to delete this, you can't recover this data again.",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "Yes, DELETE it!",
+            cancelButtonText: "No, cancel please!",
+            closeOnConfirm: false,
+            closeOnCancel: false
+        },
+                function (isConfirm) {
+                    if (isConfirm) {
+                        form.submit();
+                    } else {
+                        swal("Cancelled", "Your Record is safe :)", "error");
+
                     }
                 });
-            }
-        });
-
-        $(document).on('click', '.openEditModal', function () {
-            var id = $(this).attr('data-id');
-            if (id != '') {
-                $.ajax({
-                    url: "{{route('user.edit')}}",
-                    type: "post",
-                    data: {id: id},
-                    dataType: "json",
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        $('#editModalShow').html(data.data);
-                    }
-                });
-            }
-        });
-
-        $(document).on('click', '#update', function () {
-            var data = new FormData($('#editFormData')[0]);
-            if (data != '') {
-                $.ajax({
-                    url: "{{route('user.update')}}",
-                    data: data,
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    type: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        $("#name_error").text('');
-                        $("#role_id_error").text('');
-                        $("#email_error").text('');
-                        $("#phone_error").text('');
-                        $("#password_error").text('');
-                        $("#profile_photo_error").text('');
-                        $("#address_error").text('');
-                        if (data.errors) {
-                            $("#name_error").text(data.errors.name);
-                            $("#role_id_error").text(data.errors.role_id);
-                            $("#email_error").text(data.errors.email);
-                            $("#phone_error").text(data.errors.phone);
-                            $("#password_error").text(data.errors.password);
-                            $("#profile_photo_error").text(data.errors.profile_photo);
-                            $("#address_error").text(data.errors.address);
-                        }
-                        if (data.response == "success") {
-                            setTimeout(function () {
-                                location.reload();
-                            }, 1000);
-                            $('#viewEditModal').modal('hide');
-                            toastr.success("@lang('lang.USER_UPDATED_SUCCESSFULLY')", 'Success', {timeOut: 5000});
-//                            toastr["success"]("@lang('label.MEET_UP_HAS_BEEN_UPDATED_SUCCESSFULLY')");
-                        }
-                    }
-                });
-            }
-        });
-        
-        $(document).on('click', '.openViewModal', function () {
-            var id = $(this).attr('data-id');
-            if (id != '') {
-                $.ajax({
-                    url: "{{route('user.view')}}",
-                    type: "post",
-                    data: {id: id},
-                    dataType: "json",
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function (data) {
-                        $('#viewModalShow').html(data.data);
-                    }
-                });
-            }
-        });
-
-
-        $('.deleteBtn').on('click', function (e) {
-            event.preventDefault();
-            var form = $(this).closest('form');
-            swal({
-                title: "Are you sure?",
-                text: "You want to delete this, you can't recover this data again.",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "Yes, DELETE it!",
-                cancelButtonText: "No, cancel please!",
-                closeOnConfirm: false,
-                closeOnCancel: false
-            },
-                    function (isConfirm) {
-                        if (isConfirm) {
-                            form.submit();
-                        } else {
-                            swal("Cancelled", "Your Record is safe :)", "error");
-
-                        }
-                    });
-        });
-
-
     });
 </script>
 @endpush

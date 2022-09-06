@@ -9,6 +9,7 @@ use Session;
 use App\Models\User;
 use Hash;
 use Mail;
+use App\Helpers\Helper;
 
 class LoginController extends Controller {
 
@@ -33,6 +34,15 @@ class LoginController extends Controller {
 
         $credentials = ['email' => $request->email, 'password' => $request->password];
         if (Auth::attempt($credentials)) {
+            $data = [
+                'user_action_id' => 0,
+                'action' => 'login',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::UserLog($data);
             return redirect()->route('admin.dashboard');
         } else {
             Session::flash('error', 'Credential does not match');
@@ -41,6 +51,16 @@ class LoginController extends Controller {
     }
 
     public function logout() {
+        $data = [
+            'user_action_id' => 0,
+            'action' => 'logout',
+            'user_id' => \Auth::id(),
+            'ip_address' => request()->ip(),
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+        Helper::UserLog($data);
+
         Auth::logout();
         return redirect()->route('login');
     }
@@ -78,7 +98,7 @@ class LoginController extends Controller {
             ];
             $exisUser->password = Hash::make($newPass);
             $exisUser->save();
-            Mail::send('email-template.recover-pass', $data, function($message) use($toEmail, $toName, $subject) {
+            Mail::send('email-template.recover-pass', $data, function ($message) use ($toEmail, $toName, $subject) {
                 $message->to($toEmail, $toName)->subject($subject);
             });
             Session::flash('success', 'Recovery password sent successfully');

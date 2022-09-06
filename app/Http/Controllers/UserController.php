@@ -21,14 +21,6 @@ use PDF;
 
 class UserController extends Controller {
 
-//    public $accessToMethod;
-//    public $role_id;
-//
-//    public function __construct() {
-//
-//        $this->$accessToMethod = Helper::accessToMethod();
-//    }
-
     public function index(Request $request) {
 
         $users = ['' => __('lang.SELECT_USER')] + User::select(DB::raw("CONCAT(name,' (',phone,')') as name"), 'id')->pluck('name', 'id')->toArray();
@@ -113,8 +105,8 @@ class UserController extends Controller {
         $rules = [
             'name' => 'required',
             'role_id' => 'required',
-            'email' => 'required',
-            'phone' => 'required',
+            'email' => 'required|unique:users',
+            'phone' => 'required|unique:users',
             'password' => 'required|min:6',
         ];
 
@@ -145,6 +137,16 @@ class UserController extends Controller {
         $target->address = $request->address;
 
         if ($target->save()) {
+            $data = [
+                'user_action_id' => $target->id,
+                'action' => 'create',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::UserLog($data);
+
             if ($request->balance > 0) {
                 $target1 = new Transaction;
                 $target1->transaction_type = 'in';
@@ -167,11 +169,11 @@ class UserController extends Controller {
 
     public function update(Request $request) {
 //        echo "<pre>";print_r(public_path());exit;
-        
+
         $rules = [
             'name' => 'required',
-            'email' => 'required',
-            'phone' => 'required',
+            'email' => "required",
+            'phone' => "required",
         ];
         if (!empty($request->file('profile_photo'))) {
             $rules['profile_photo'] = ['image', 'mimes:jpg,jpeg,png'];
@@ -207,6 +209,15 @@ class UserController extends Controller {
         }
         $target->address = $request->address;
         if ($target->save()) {
+            $data = [
+                'user_action_id' => $target->id,
+                'action' => 'update',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::UserLog($data);
             return response()->json(['response' => 'success']);
         }
     }
@@ -214,6 +225,15 @@ class UserController extends Controller {
     public function destroy(Request $request) {
         $target = User::findOrFail($request->id);
         if ($target->delete()) {
+            $data = [
+                'user_action_id' => $target->id,
+                'action' => 'delete',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::UserLog($data);
             if (file_exists(public_path() . '/' . $target->profile_photo) && !empty($target->profile_photo)) {
                 unlink(public_path() . '/' . $target->profile_photo);
             }
@@ -227,8 +247,8 @@ class UserController extends Controller {
         $url = 'user_id=' . $request->user_id . '&role_id=' . $request->role_id . '&search_value=' . $request->search_value;
         return redirect('admin/user?' . $url);
     }
-    
-     public function myprofile() {
+
+    public function myprofile() {
         return view('backEnd.user.my_profile');
     }
 
@@ -256,8 +276,9 @@ class UserController extends Controller {
         if ($request->password != null) {
             $user->password = Hash::make($request->password);
         }
-        if($user->save()){
+        if ($user->save()) {
             return redirect()->back()->with('success', 'Profile Updated');
         }
     }
+
 }

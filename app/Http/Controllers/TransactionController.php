@@ -14,6 +14,7 @@ use App\Models\Package;
 use Session;
 use DB;
 use App\Helpers\Helper;
+use Auth;
 
 class TransactionController extends Controller {
 
@@ -58,7 +59,6 @@ class TransactionController extends Controller {
         $paymentMode = ['' => '--Select Payment mode--', 'cash' => 'cash', 'cheque' => 'cheque'];
         $ticketType = ['normal' => 'Normal', 'refund' => 'Refund', 'reissue' => 'Reissue', 'deport' => 'Deport'];
 
-
         $packageDetails = [];
         if ($request->issue_id == '5') {
             $packageDetails = Package::findOrFail($request->application_id);
@@ -81,7 +81,7 @@ class TransactionController extends Controller {
     }
 
     public function store(Request $request) {
-        
+
         $rules = [
             'transaction_type' => 'required',
             'payment_mode' => 'required',
@@ -109,6 +109,7 @@ class TransactionController extends Controller {
         $target->application_id = $request->application_id;
         $target->note = $request->note;
         $target->ticket_type = $request->ticket_type;
+        $target->created_by = Auth::id();
 
         //Reissue Extra field
         if ($request->ticket_type == 'reissue') {
@@ -169,7 +170,7 @@ class TransactionController extends Controller {
     }
 
     public function edit(Request $request) {
-
+//        echo "<pre>";print_r($request->all());exit;
         $target = Transaction::findOrFail($request->id);
 
         $transactionTypeArr = ['' => __('lang.SELECT_TR_TYPE'), 'in' => 'Cash In', 'out' => 'Cash Out'];
@@ -192,12 +193,11 @@ class TransactionController extends Controller {
 //        echo "<pre>";print_r($target->toArray());exit;
         $view = view('backEnd.transaction.openEditModal')->with(compact('target', 'transactionTypeArr', 'issueArr', 'paymentMode', 'bankAccountArr', 'users', 'data', 'issue_id', 'ticketType', 'packageDetails'))->render();
 
-
         return response()->json(['data' => $view]);
     }
 
     public function update(Request $request) {
-       // echo "<pre>";print_r($request->all());exit;
+        // echo "<pre>";print_r($request->all());exit;
 
         $rules = [
             'transaction_type' => 'required',
@@ -307,8 +307,4 @@ class TransactionController extends Controller {
         }
     }
 
-//    public function filter(Request $request) {
-//        $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
-//        return redirect('admin/transaction-list?' . $url);
-//    }
 }

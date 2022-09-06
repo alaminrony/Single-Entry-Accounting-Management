@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class RoleToAccess extends Model
 {
     use HasFactory;
+    
+    
 }

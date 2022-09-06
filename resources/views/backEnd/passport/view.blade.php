@@ -243,10 +243,17 @@
                                         @endif
 
 
-                                        @if(!empty($target->delivery_date))
+                                        @if(!empty($target->dob))
                                         <tr>
-                                            <td><strong>@lang('lang.DELIVERY_DATE')</strong> </td>
-                                            <td>{{Helper::dateFormat2($target->delivery_date)}}</td>
+                                            <td><strong>@lang('lang.DATE_OF_BIRTH')</strong> </td>
+                                            <td>{{Helper::dateFormat2($target->dob)}}</td>
+                                        </tr>
+                                        @endif
+
+                                        @if(!empty($target->nid_no))
+                                        <tr>
+                                            <td><strong>@lang('lang.NID')</strong> </td>
+                                            <td>{{$target->nid_no}}</td>
                                         </tr>
                                         @endif
 
@@ -385,7 +392,7 @@
                                 </table>
                                 <div class="form-group row">
                                     <div class="col-md-10">
-                                         <h4 style="text-align: center;margin-top: 0px;">Document Management</h4>
+                                        <h4 style="text-align: center;margin-top: 0px;">Document Management</h4>
                                         <div class = "form-group">
                                             <div class ="table-responsive">
                                                 <table class ="table table-bordered" id="dynamic_field">

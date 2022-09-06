@@ -9,16 +9,19 @@
                 <div class="col-sm-6">
                     <h1>@lang('lang.USER_ROLE')</h1>
                 </div>
+                @if(!empty($accessArr['user_role'][9]))
                 <div class="col-sm-6">
                     <div class="float-right mr-2">
                         <a type="button" class="btn btn-success openCreateModal" data-toggle="modal" title="@lang('lang.VIEW_ISSUE')" data-target="#viewCreateModal"><i class="fa fa-plus-square"></i> Create role</a>
                     </div>
                 </div>
+                @endif
             </div>
             @include('backEnd.layouts.message')
         </div><!-- /.container-fluid -->
     </section>
-
+    
+    @if(!empty($accessArr['user_role'][12]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'role.filter','method'=>'GET'])!!}
@@ -52,6 +55,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -84,15 +88,20 @@
                                         <td>{{$target->role_name}}</td>
                                         <td>{{Helper::dateFormat($target->created_at)}}</td>
                                         <td>
+                                            @if(!empty($accessArr['user_role'][10]))
                                             <div style="float: left;margin-right:4px;">
                                                 <a type="button" class="btn btn-warning openEditModal" data-toggle="modal" title="@lang('lang.EDIT')" data-target="#viewEditModal" data-id="{{$target->id}}"><i class="fa fa-edit"></i></a>
                                             </div>
+                                            @endif
+                                            
+                                            @if(!empty($accessArr['user_role'][11]))
                                             <div style="float: left;">
                                                 {!!Form::open(['route'=>['role.destroy',$target->id]])!!}
                                                 @method('DELETE')
                                                 <button type="submit" title="@lang('lang.DELETE')" class="btn btn-danger deleteBtn"><i class="fa fa-trash"></i></button>
                                                 {!!Form::close()!!}
-                                            </div>  
+                                            </div>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach

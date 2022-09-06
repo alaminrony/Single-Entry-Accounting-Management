@@ -9,25 +9,27 @@
                 <div class="col-sm-6">
                     <h1>@lang('lang.BANK_ACCOUNT')</h1>
                 </div>
-<!--                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="#">Home</a></li>
-                        <li class="breadcrumb-item active">Simple Tables</li>
-                    </ol>
-                </div>-->
+                @if(!empty($accessArr['bank'][55]))
+                <div class="col-sm-6">
+                    <div class="float-right mr-2">
+                        <a href="{{route('bankAccount.create')}}" class="btn btn-success"  title="@lang('lang.CREATE_BANK')"><i class="fa fa-plus-square"></i> @lang('lang.CREATE_BANK')</a>
+                    </div>
+                </div>
+                @endif
             </div>
             @include('backEnd.layouts.message')
         </div><!-- /.container-fluid -->
     </section>
-    
-     <section class="content">
+
+    @if(!empty($accessArr['bank'][59]))
+    <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'bankAccount.filter','method'=>'GET'])!!}
             <input type="hidden" name='filter' value="true">
             <div class="row">
                 <div class="col-md-10 offset-md-1">
                     <div class="row">
-                        
+
                         <div class="col-3">
                             <div class="form-group">
                                 <label>@lang('lang.TEXT'):</label>
@@ -54,6 +56,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -94,17 +97,29 @@
                                         <td>{{$target->bank_name}}</td>
                                         <td>{{$target->branch}}</td>
                                         <td width="20%">
-                                            <div style="float: left;margin-right:4px;">
+                                            <div class="btn-group">
+                                                @if(!empty($accessArr['bank'][57]))
                                                 <a class="btn btn-success btn-sm" title="@lang('lang.VIEW')" href="{{route('bankAccount.view',[$target->id,'page'=>$page])}}"><i class="fa fa-eye"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['bank'][56]))
                                                 <a class="btn btn-warning btn-sm" title="@lang('lang.EDIT')" href="{{route('bankAccount.edit',[$target->id,'page'=>$page])}}"><i class="fa fa-edit"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['bank'][60]))
                                                 <a type="button" class="btn btn-secondary btn-sm openCreateModal" data-id="{{$target->id}}" data-toggle="modal" title="@lang('lang.TRANSACTION')" data-target="#viewCreateModal"><i class="fa fa-exchange-alt"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['bank'][61]))
                                                 <a type="button" class="btn btn-primary btn-sm openListModal" data-id="{{$target->id}}" data-toggle="modal" title="@lang('lang.TRANSACTION_LIST')" data-target="#viewListModal"><i class="fa fa-list"></i></a>
-                                            </div>
-                                            <div style="float: left;">
+                                                @endif
+
+                                                @if(!empty($accessArr['bank'][58]))
                                                 {!!Form::open(['route'=>['bankAccount.destroy',$target->id]])!!}
                                                 @method('DELETE')
                                                 <button type="submit" title="@lang('lang.DELETE')" class="btn btn-danger btn-sm deleteBtn"><i class="fa fa-trash"></i></button>
                                                 {!!Form::close()!!}
+                                                @endif
                                             </div>  
                                         </td>
                                     </tr>
@@ -152,7 +167,7 @@
 @endsection
 @push('script')
 <script type="text/javascript">
-    $(document).ready(function(){
+    $(document).ready(function () {
         $('.select2').select2();
     });
     $(document).on('click', '.openCreateModal', function () {

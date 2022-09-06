@@ -40,11 +40,23 @@
             <thead>
                 <tr>
                     <th>SL</th>
-                    <th>@lang('lang.CREATED_AT')</th>
                     <th>@lang('lang.CUSTOMER_CODE')</th>
+                    <th>@lang('lang.COUNTRY')</th>
+                    <th>@lang('lang.ENTRY_TYPE')</th>
+                    <th>@lang('lang.YEAR')</th>
                     <th>@lang('lang.NAME')</th>
                     <th>@lang('lang.PASSPORT_NO')</th>
+                    <th>@lang('lang.PASSPORT_ISSUE_DATE')</th>
+                    <th>@lang('lang.PASSPORT_RECEIVE_DATE')</th>
+                    <th>@lang('lang.PASSPORT_EXPIRY_DATE')</th>
+                    <th>@lang('lang.FIT_DATE')</th>
+                    <th>@lang('lang.UNFIT_DATE')</th>
                     <th>@lang('lang.CONTACT_NO')</th>
+                    <th>@lang('lang.CONTACT_PURPOSE')</th>
+                    <th>@lang('lang.CONTACT_PERSON')</th>
+                    <th>@lang('lang.CENTER_NAME')</th>
+                    <th>@lang('lang.REF')</th>
+                    <th>@lang('lang.CREATED_AT')</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,11 +65,23 @@
                 @foreach($targets as $target)
                 <tr>
                     <td>{{++$i}}</td>
-                    <td>{{Helper::dateFormat($target->created_at)}}</td>
-                    <td>{{$target->customer_code}}</td>
+                    <td>{{$target->customer_code ?? ''}}</td>
+                    <td>{{$countries[$target->country_id] ?? ''}}</td>
+                    <td>{{$entryTypes[$target->type_id] ?? ''}}</td>
+                    <td>{{$target->year}}</td>
                     <td>{{$target->name}}</td>
                     <td>{{$target->passport_no}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_issue_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_recieve_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_expiry_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->fit_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->unfit_date)}}</td>
                     <td>{{$target->contact_no}}</td>
+                    <td>{{$target->contact_purpose}}</td>
+                    <td>{{$target->contact_person}}</td>
+                    <td>{{$target->center_name}}</td>
+                    <td>{{$users[$target->ref] ?? ''}}</td>
+                    <td>{{Helper::dateFormat($target->created_at)}}</td>
                 </tr>
                 @endforeach
                 @else

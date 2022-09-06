@@ -9,16 +9,19 @@
                 <div class="col-sm-6">
                     <h1>@lang('lang.PACKAGE_LIST')</h1>
                 </div>
+                @if(!empty($accessArr['package'][47]))
                 <div class="col-sm-6">
                     <div class="float-right mr-2">
                         <a href="{{route('packageEntry.create')}}" class="btn btn-success"  title="@lang('lang.CREATE_PACKAGE')"><i class="fa fa-plus-square"></i> @lang('lang.CREATE_PACKAGE')</a>
                     </div>
                 </div>
+                @endif
             </div>
             @include('backEnd.layouts.message')
         </div><!-- /.container-fluid -->
     </section>
 
+    @if(!empty($accessArr['package'][51]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'packageEntry.packageFilter','method'=>'GET'])!!}
@@ -36,6 +39,18 @@
                             </div>
                         </div>
 
+                        @if(!empty($accessArr['package'][107]))
+                        <div class="col-3">
+                            <div class="form-group">
+                                <label>@lang('lang.CREATED_BY'):</label>
+                                {!!Form::select('created_by',$users,Request::get('created_by'),['class'=>'select2 form-control','id'=>'created_by','width'=>'100%']) !!}
+                                @if($errors->has('created_by'))
+                                <span class="text-danger">{{$errors->first('created_by')}}</span>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+
                         <div class="col-3">
                             <div class="form-group">
                                 <label></label>
@@ -52,6 +67,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -60,11 +76,12 @@
                 <div class="col-md-12">
                     <div class="card card-secondary">
                         <div class="card-header">
-                            <h3 class="card-title">@lang('lang.PACKAGE_LIST')</h3>
+                            <h3 class="card-title">@lang('lang.PACKAGE_LIST') <span>({{$targets->total()}}) data found</h3>
                             <div class="float-right">
-                                <a href="{{url('admin/package-entry?view=print')}}" class="btn btn-primary"  title="@lang('lang.PRINT')"><i class="fa fa-print"></i></a>
-                                <a href="{{url('admin/package-entry?view=pdf')}}" class="btn btn-warning"  title="@lang('lang.PDF')"><i class="fa fa-file-pdf"></i></a>
-                                <a href="{{url('admin/package-entry?view=excel')}}" class="btn btn-success"  title="@lang('lang.EXCEL')"><i class="fa fa-file-excel"></i></a>
+                                <a type="button" href="{{route('packageEntry.index')}}"  class="btn btn-primary">@lang('lang.BACK_TO_ALL_LIST')</a>
+<!--                                <a href="{{url('admin/package-entry?view=print')}}" class="btn btn-primary"  title="@lang('lang.PRINT')"><i class="fa fa-print"></i></a>
+                                <a href="{{url('admin/package-entry?view=pdf')}}" class="btn btn-warning"  title="@lang('lang.PDF')"><i class="fa fa-file-pdf"></i></a>-->
+                                <a href="{{url('admin/package-entry?view=excel')}}" class="btn btn-warning"  title="@lang('lang.EXCEL')"><i class="fa fa-file-excel"></i></a>
                             </div>
                         </div>
 
@@ -83,19 +100,40 @@
                                             <p style="float:left;">Days: <b>{{$target->total_dayes}}</b></p>
                                             <p style="float:right;">Person: <b>{{$target->adult + $target->children}}</b></p>
                                         </div>
+                                        <br/>
+                                        <br/>
                                         <div class="text-center pb-2">
-                                            <div class="d-inline-block">
+                                            <div class="d-inline-block btn-group">
+                                                @if(!empty($accessArr['invoice'][67]))
+                                                <a class="btn btn-primary btn-sm" title="@lang('lang.ADD_INVOICE')" href="{{route('invoice.create',5)}}"><i class="fas fa-file-invoice"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['invoice'][66]))
+                                                <a class="btn btn-secondary btn-sm" title="@lang('lang.INVOICE_LIST')" href="{{route('invoice.index',5)}}"><i class="fas fa-list"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['package'][49]))
                                                 <a class="btn btn-success btn-sm" title="@lang('lang.VIEW_PACKAGE')"  href="{{route('packageEntry.view',$target->id)}}"><i class="fa fa-eye"></i></a>
+                                                @endif
+                                                @if(!empty($accessArr['package'][48]))
                                                 <a class="btn btn-warning btn-sm" title="@lang('lang.EDIT_PACKAGE')"  href="{{route('packageEntry.edit',$target->id)}}"><i class="fa fa-edit"></i></a>
+                                                @endif
+                                                @if(!empty($accessArr['package'][52]))
                                                 <a type="button" class="btn btn-secondary btn-sm openCreateModal" data-id="{{$target->id}}" data-issue="5" data-toggle="modal" title="@lang('lang.TRANSACTION')" data-target="#viewCreateModal"><i class="fa fa-exchange-alt"></i></a>
+                                                @endif
+                                                @if(!empty($accessArr['package'][53]))
                                                 <a href="{{route('packageEntry.transaction-list',$target->id)}}" class="btn btn-primary btn-sm"  title="@lang('lang.TRANSACTION_LIST')"><i class="fa fa-list"></i></a>
+                                                @endif
                                             </div>
+
+                                            @if(!empty($accessArr['package'][50]))
                                             <div class="d-inline-block">
                                                 {!!Form::open(['route'=>['packageEntry.destroy',$target->id]])!!}
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm deleteBtn" title="@lang('lang.DELETE_MEDICAL')"><i class="fa fa-trash"></i></button>
                                                 {!!Form::close()!!}
                                             </div>
+                                            @endif
 
                                         </div>
                                     </div>

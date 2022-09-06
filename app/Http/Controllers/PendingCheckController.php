@@ -50,13 +50,15 @@ class PendingCheckController extends Controller {
     }
 
     public function approve(Request $request) {
-        $target = PendingCheque::findOrFail($request->id);
+        $target = PendingCheque::find($request->id);
 
         if (!empty($target->transaction_id)) {
-            $transAction = Transaction::findOrFail($target->transaction_id);
+            $transAction = Transaction::find($target->transaction_id);
         }
+        
+         
         if (!empty($transAction->bank_account_id)) {
-            $bankAccount = BankAccount::findOrFail($transAction->bank_account_id);
+            $bankAccount = BankAccount::find($transAction->bank_account_id);
             $accountBalance = $bankAccount->current_amount;
             if ($target->transaction_type == 'in') {
                 $bankAccount->current_amount = $accountBalance + $target->cheque_amount;
@@ -80,7 +82,10 @@ class PendingCheckController extends Controller {
 
     public function destroy(Request $request) {
         $target = PendingCheque::findOrFail($request->id);
-        $transAction = Transaction::findOrFail($target->transaction_id);
+        if(!empty($target->transaction_id)){
+            $transAction = Transaction::findOrFail($target->transaction_id);
+        }
+        
 
 //        if (!empty($transAction->bank_account_id) && ($target->status == '1')) {
 //            $bankAccount = BankAccount::findOrFail($transAction->bank_account_id);

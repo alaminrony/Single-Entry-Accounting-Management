@@ -1,6 +1,5 @@
 @extends('backEnd.layouts.master')
 @section('content')
-<!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
     <section class="content-header">
@@ -10,7 +9,8 @@
                     <h1>@lang('lang.TICKET')</h1>
                 </div>
             </div>
-        </div><!-- /.container-fluid -->
+            @include('backEnd.layouts.message')
+        </div>
     </section>
 
     <!-- Main content -->
@@ -77,7 +77,7 @@
                                         @if(!empty($target->agent))
                                         <tr>
                                             <td><strong>@lang('lang.AGENT')</strong> </td>
-                                            <td>{{$target->agent}}</td>
+                                            <td>{{$users[$target->agent] ?? ''}}</td>
                                         </tr>
                                         @endif
 
@@ -120,7 +120,7 @@
                                         @if(!empty($target->fly_type))
                                         <tr>
                                             <td><strong>@lang('lang.FLYING_TYPE')</strong> </td>
-                                            <td>{{$target->fly_type == 'one_way' ? 'one way' : 'return'}}</td>
+                                            <td>{{$flyingTypes[$target->fly_type] ?? ''}}</td>
                                         </tr>
                                         @endif
 
@@ -154,7 +154,7 @@
                                         @if(!empty($target->tax_type))
                                         <tr>
                                             <td><strong>@lang('lang.TAX_TYPE')</strong> </td>
-                                            <td>{{$target->tax_type == '1' ? 'TK' : 'Percentage' }}</td>
+                                            <td>{{$taxTypes[$target->tax_type] ?? ''}}</td>
                                         </tr>
                                         @endif
                                         @if(!empty($target->fare_with_tax))
@@ -187,7 +187,7 @@
                                         @if(!empty($target->commission_type))
                                         <tr>
                                             <td><strong>@lang('lang.COMMISSION_TYPE')</strong> </td>
-                                            <td>{{$target->commission_type == '1' ? 'TK' : 'Percentage'}}</td>
+                                            <td>{{$commissionTypes[$target->commission_type] ?? ''}}</td>
                                         </tr>
                                         @endif
                                         @if(!empty($target->net_fare))
@@ -205,7 +205,7 @@
                                 </table>
                                 <div class="form-group row">
                                     <div class="col-md-10">
-                                        <h4 style="text-align: center;margin-top: 0px;">Document Management</h4>
+                                        <h4 style="margin-top: 0px;">Document Management</h4>
                                         <div class = "form-group">
                                             <div class ="table-responsive">
                                                 <table class ="table table-bordered" id="dynamic_field">
@@ -251,6 +251,132 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                @if($target->reissue->isNotEmpty())
+                                <h4 style="margin-top: 0px;">@lang('lang.REISSUE')</h4>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>SL</th>
+                                            <th>@lang('lang.REISSUE_DATE')</th>
+                                            <th>@lang('lang.CUSTOMER_CODE')</th>
+                                            <th>@lang('lang.NAME')</th>
+                                            <th>@lang('lang.PREVIOUS_TICKET')</th>
+                                            <th>@lang('lang.NEW_TICKET')</th>
+                                            <th>@lang('lang.SERVICE_CHARGE')</th>
+                                            <th>@lang('lang.REISSUE_CHARGE')</th>
+                                            <th>@lang('lang.NET_FARE')</th>
+                                            <th>@lang('lang.ACTION')</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php $i = 0; ?>
+                                        @foreach($target->reissue as $reissue)
+                                        <tr>
+                                            <td>{{++$i}}</td>
+                                            <td>{{Helper::dateFormat($reissue->issue_date)}}</td>
+                                            <td>{{$reissue->customer_code}}</td>
+                                            <td>{{$reissue->name}}</td>
+                                            <td>{{$reissue->previous_ticket_no}}</td>
+                                            <td>{{$reissue->new_ticket_no}}</td>
+                                            <td>{{$reissue->service_charge}}</td>
+                                            <td>{{$reissue->reissue_charge}}</td>
+                                            <td>{{$reissue->net_fare}}</td>
+                                            <td width="20%">
+                                                <div class="btn-group">
+                                                    <!--<a type="button" class="mr-1 btn btn-secondary btn-sm openOptionCreateModal" data-id="{{$target->id}}" data-issue="4" data-toggle="modal"  title="@lang('lang.DETAILS')" data-target="#viewOptionCreateModal"><i class="fa fa-eye"></i></a>-->
+                                                    {!!Form::open(['route'=>['ticketEntry.optionDelete',['ticket_type'=>'reissue','option_id'=>$reissue->id]]])!!}
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm deleteBtn" title="@lang('lang.DELETE')"><i class="fa fa-trash"></i></button>
+                                                    {!!Form::close()!!}
+                                                </div>  
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                @endif
+
+
+                                @if($target->refund->isNotEmpty())
+                                <h4 style="margin-top: 0px;">@lang('lang.REFUND')</h4>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>SL</th>
+                                            <th>@lang('lang.REFUND_TICKET_DATE')</th>
+                                            <th>@lang('lang.CUSTOMER_CODE')</th>
+                                            <th>@lang('lang.NAME')</th>
+                                            <th>@lang('lang.REFUND_TICKET_NO')</th>
+                                            <th>@lang('lang.NET_FARE_RECEIVABLE')</th>
+                                            <th>@lang('lang.ACTION')</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php $i = 0; ?>
+                                        @foreach($target->refund as $refund)
+                                        <tr>
+                                            <td>{{++$i}}</td>
+                                            <td>{{Helper::dateFormat($refund->returning_ticket_date)}}</td>
+                                            <td>{{$refund->customer_code}}</td>
+                                            <td>{{$refund->name}}</td>
+                                            <td>{{$refund->refund_ticket_number}}</td>
+                                            <td>{{$refund->net_fare_refund}}</td>
+                                            <td width="20%">
+                                                <div class="btn-group">
+                                                    <!--<a type="button" class="mr-1 btn btn-secondary btn-sm openOptionCreateModal" data-id="{{$target->id}}" data-issue="4" data-toggle="modal"  title="@lang('lang.DETAILS')" data-target="#viewOptionCreateModal"><i class="fa fa-eye"></i></a>-->
+                                                    {!!Form::open(['route'=>['ticketEntry.optionDelete',['ticket_type'=>'refund','option_id'=>$refund->id]]])!!}
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm deleteBtn" title="@lang('lang.DELETE')"><i class="fa fa-trash"></i></button>
+                                                    {!!Form::close()!!}
+                                                </div>  
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                @endif
+
+
+                                @if($target->deport->isNotEmpty())
+                                <h4 style="margin-top: 0px;">@lang('lang.DEPORTED')</h4>
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>SL</th>
+                                            <th>@lang('lang.DEPORT_DATE')</th>
+                                            <th>@lang('lang.CUSTOMER_CODE')</th>
+                                            <th>@lang('lang.NAME')</th>
+                                            <th>@lang('lang.DEPORT_TICKET_NO')</th>
+                                            <th>@lang('lang.NET_FARE')</th>
+                                            <th>@lang('lang.ACTION')</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php $i = 0; ?>
+                                        @foreach($target->deport as $deport)
+                                        <tr>
+                                            <td>{{++$i}}</td>
+                                            <td>{{Helper::dateFormat($deport->deport_date)}}</td>
+                                            <td>{{$deport->customer_code}}</td>
+                                            <td>{{$deport->name}}</td>
+                                            <td>{{$deport->deport_ticket_number}}</td>
+                                            <td>{{$deport->net_fare_deport}}</td>
+                                            <td width="20%">
+                                                <div class="btn-group">
+                                                    <!--<a type="button" class="mr-1 btn btn-secondary btn-sm openOptionCreateModal" data-id="{{$target->id}}" data-issue="4" data-toggle="modal"  title="@lang('lang.DETAILS')" data-target="#viewOptionCreateModal"><i class="fa fa-eye"></i></a>-->
+                                                    {!!Form::open(['route'=>['ticketEntry.optionDelete',['ticket_type'=>'deport','option_id'=>$deport->id]]])!!}
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm deleteBtn" title="@lang('lang.DELETE')"><i class="fa fa-trash"></i></button>
+                                                    {!!Form::close()!!}
+                                                </div>  
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                                @endif
+                                <!-- /.card-body -->
                                 <a type="button" href="#" onclick="window.history.back()" class="btn btn-primary">Back</a>
                             </div>
                         </div>
@@ -260,4 +386,31 @@
     </section>
 </div>
 @endsection
+@push('script')
+<script type="text/javascript">
+    $('.deleteBtn').on('click', function (event) {
+        event.preventDefault();
+        var form = $(this).closest('form');
+        swal({
+            title: "Are you sure?",
+            text: "You want to delete this, you can't recover this data again.",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "Yes, DELETE it!",
+            cancelButtonText: "No, cancel please!",
+            closeOnConfirm: false,
+            closeOnCancel: false
+        },
+                function (isConfirm) {
+                    if (isConfirm) {
+                        form.submit();
+                    } else {
+                        swal("Cancelled", "Your Record is safe :)", "error");
+
+                    }
+                });
+    });
+</script>
+@endpush
 
