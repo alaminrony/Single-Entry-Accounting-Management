@@ -20,6 +20,15 @@ use Illuminate\Support\Facades\Route;
 //    return view('dashboard');
 //})->name('dashboard');
 
+Route::get('email-test', function(){
+
+    $details['email'] = 'alamin.onest@gmail.com';
+
+    dispatch(new App\Jobs\SendEmailJob($details));
+
+    dd('done');
+});
+
 Route::get('/', function () {
     return redirect('admin/dashboard');
 });
@@ -32,7 +41,7 @@ Route::post('recovery-password', 'LoginController@recoveryPassword')->name('reco
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth']], function() {
     Route::get('/dashboard', 'DashboardController@index')->name('admin.dashboard');
-    
+
     //User
     Route::get('myprofile', 'UserController@myprofile')->name('my.profile');
     Route::post('myprofile/edit','UserController@myprofileEdit')->name('my.profile.edit');
@@ -100,10 +109,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth']], function() {
     Route::get('account-receivable-filter', 'ReceivableController@filter')->name('receivable.filter');
     Route::get('account-receivable/{id}/details', 'ReceivableController@details')->name('receivable.details');
     Route::get('account-receivable/filter', 'ReceivableController@detailsFilter')->name('receivable.detailsFilter');
-    
-   
-    
-    
+
+
+
+
     //Settings
     Route::get('setting', 'SettingController@index')->name('setting.index');
     Route::get('setting-filter', 'SettingController@filter')->name('setting.filter');
@@ -169,8 +178,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth']], function() {
     Route::delete('ticket-entry/{id}/delete', 'TicketEntryController@destroy')->name('ticketEntry.destroy');
     Route::get('ticket-entry/{id}/transaction-list', 'TicketEntryController@transactionList')->name('ticketEntry.transaction-list');
     Route::get('ticket-entry/{id}/filter', 'TicketEntryController@filter')->name('ticketEntry.filter');
-    
-    
+
+
     //Ticket Management
     Route::get('package-entry', 'PackageEntryController@index')->name('packageEntry.index');
     Route::get('package-entry-filter', 'PackageEntryController@packageFilter')->name('packageEntry.packageFilter');
@@ -195,7 +204,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth']], function() {
     Route::post('voucher/edit', 'TransactionController@edit')->name('transaction.edit');
     Route::post('voucher/update', 'TransactionController@update')->name('transaction.update');
     Route::delete('voucher/{id}/delete', 'TransactionController@destroy')->name('transaction.destroy');
-    
+
      // All Transaction List
     Route::get('report-transaction-list', 'ReportController@transactionList')->name('report.transactionList');
     Route::get('report-transaction-filter', 'ReportController@filter')->name('report.filter');
