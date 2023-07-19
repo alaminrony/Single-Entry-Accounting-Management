@@ -7,10 +7,37 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>@lang('lang.REPORT_RECEIVABLE') for {{$targets[0]['name']??''}}</h1>
+                    <h1>@lang('lang.REPORT_RECEIVABLE') for {{$customerName->name ??''}}</h1>
                 </div>
             </div>
         </div><!-- /.container-fluid -->
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-10 offset-md-1">
+                    <div class="row">
+                        <table class="table table-bordered bg-light" >
+                            <thead>
+                                <tr>
+                                    <td> <label>@lang('lang.TOTAL_INVOICED')</label></td>
+                                    <td> <label>@lang('lang.TOTAL_CONTRACT')</label></td>
+                                    <td> <label>@lang('lang.TOTAL_PAYABLE')</label></td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{$totalInvoiced ?? 0}} TK</td>
+                                    <td>{{$totalContract ?? 0}} TK</td>
+                                    <td>{{$totalInvoiced -$totalContract }} TK</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <section class="content">
@@ -60,18 +87,18 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="col-3">
                             <div class="form-group">
                                 <label></label>
                                 <div class="input-group">
                                     <div class="float-right mt-2" style="margin-left: 45%;">
-                                        <?php 
+                                        <?php
                                         $from_date = Request::get('from_date');
                                         $to_date = Request::get('to_date');
-                                        if(!empty($from_date) && !empty($to_date)){
-                                           $url = 'filter=true'.'&from_date=' . $from_date . '&to_date=' . $to_date; 
-                                        }else{
+                                        if (!empty($from_date) && !empty($to_date)) {
+                                            $url = 'filter=true' . '&from_date=' . $from_date . '&to_date=' . $to_date;
+                                        } else {
                                             $url = '';
                                         }
                                         ?>
@@ -97,7 +124,7 @@
                             <h3 class="card-title">
                                 <b>
                                     Customer: {{$targets[0]['name']??''}}
-                                    
+
                                     @if(!empty(Request::get('from_date')))
                                     <span class="ml-2">From date: {{Request::get('from_date')}}</span>
                                     @endif

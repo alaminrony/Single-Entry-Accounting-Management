@@ -29,10 +29,11 @@ class ReportController extends Controller {
 
     public function transactionList(Request $request) {
 //       echo "<pre>";print_r($request->all());exit;
+        $createdBy = ['' => __('lang.SELECT_CREATED_BY')] + User::join('transactions', 'transactions.created_by', '=', 'users.id')->select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $transactionTypeArr = ['' => __('lang.SELECT_TR_TYPE'), 'in' => 'Cash In', 'out' => 'Cash Out'];
         $bankAccountArr = BankAccount::select(DB::raw("CONCAT(bank_name,' => ',account_name,' (',account_no,')') as bank_account"), 'id')->pluck('bank_account', 'id')->toArray();
-        $issues = Issue::pluck('issue_title','id')->toArray();
+        $issues = Issue::pluck('issue_title', 'id')->toArray();
 
         $total_transaction = Transaction::sum('amount');
         $total_in = Transaction::where('transaction_type', 'in')->sum('amount');
@@ -53,6 +54,10 @@ class ReportController extends Controller {
                 $query->where('cheque_no', 'like', "%{$searchText}%")
                         ->orWhere('amount', 'like', "%{$searchText}%");
             });
+        }
+        
+         if (!empty($request->created_by)) {
+            $targets = $targets->where('created_by', $request->created_by);
         }
 
         if ($request->view == 'print') {
@@ -89,11 +94,15 @@ class ReportController extends Controller {
         $data['title'] = 'Transaction';
         $data['meta_tag'] = 'Transaction page, rafiq & sons';
         $data['meta_description'] = 'Transaction, rafiq & sons';
-        return view('backEnd.report.transaction.transaction_list')->with(compact('targets', 'issues', 'bankAccountArr', 'users', 'transactionTypeArr', 'data','total_transaction', 'total_in', 'total_out', 'total_profit','applicationDetails'));
+        return view('backEnd.report.transaction.transaction_list')->with(compact('targets', 'issues', 'bankAccountArr', 'users', 'transactionTypeArr', 'data', 'total_transaction', 'total_in', 'total_out', 'total_profit', 'applicationDetails', 'createdBy'));
     }
 
     public function filter(Request $request) {
-        $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
+        if (isset($request->created_by)) {
+            $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value . '&created_by=' . $request->created_by;
+        } else {
+            $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
+        }
         return redirect('admin/report-transaction-list?' . $url);
     }
 

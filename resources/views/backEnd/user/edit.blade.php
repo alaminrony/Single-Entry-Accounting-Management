@@ -38,8 +38,12 @@
             </div>
             <div class="form-group row">
                 <label for="password" class="col-sm-4 col-form-label">@lang('lang.PASSWORD') :</label>
-                <div class="col-sm-8">
-                    <input type="password" class="form-control" id="password" placeholder="Enter password" name="password" />
+                <div class="input-group col-sm-8">
+                    <input type="password" class="form-control" id="password" placeholder="Enter password" name="password" value=""/>
+                    <div class="input-group-append">
+                        <!--<span  class="input-group-text bg-secondary fa fa-fw fa-eye field_icon toggle-password"></span>-->
+                        <span toggle="#password-field"  class="input-group-text bg-secondary toggle-password" title="@lang('lang.HIDE_SHOW_PASS')"><i class="fa fa-eye-slash" id="hideShowIcon"></i></span>
+                    </div> 
                     <span class="text-danger" id="password_error"></span>
                 </div>
             </div>
@@ -56,7 +60,7 @@
                     <img src="{{asset($target->profile_photo)}}" class="img-fluid" style="height: 100px;">
                 </div>
             </div>
-            
+
             <div class="form-group row">
                 <label for="balance" class="col-sm-4 col-form-label">@lang('lang.BALANCE') :</label>
                 <div class="col-sm-8">
@@ -82,6 +86,15 @@
     </div>
     {!!Form::close()!!}
 </div>
+
+<script>
+    $(document).on('click', '.toggle-password', function () {
+        $('#hideShowIcon').toggleClass("fa-eye fa-eye-slash");
+        var passType = $("#password");
+        passType.attr('type') === 'password' ? passType.attr('type', 'text') : passType.attr('type', 'password');
+    });
+</script>
+
 
 
 

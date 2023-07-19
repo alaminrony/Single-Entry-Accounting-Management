@@ -31,7 +31,7 @@
                             </div>
                         </div>
 
-                       
+
                         {!!Form::open(['route'=>'passportEntry.store','class'=>'form-horizontal','enctype' => 'multipart/form-data'])!!}
                         <div class="card-body">
                             <div class="row">
@@ -183,6 +183,15 @@
                                         @endif
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>@lang('lang.NID')</label>
+                                        {!!Form::text('nid_no',old('nid_no'),['class'=>'form-control','id'=>'nid_no','placeholder'=>"Enter nid no"])!!}
+                                        @if($errors->has('nid_no'))
+                                        <span class="text-danger">{{$errors->first('nid_no')}}</span>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
 
 
@@ -267,7 +276,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group row">
                                 <div class="col-md-10">
                                     <h4 style="text-align: center;margin-top: 0px;">Document Management</h4>

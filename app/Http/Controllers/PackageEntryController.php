@@ -29,7 +29,7 @@ class PackageEntryController extends Controller {
 
     public function index(Request $request) {
 //        echo "<pre>";print_r($request->all());exit;
-        $banksArr = ['' => __('lang.SELECT_BANK')] + BankAccount::pluck('bank_name', 'id')->toArray();
+        $users = ['' => __('lang.SELECT_USER')] + User::join('packages', 'packages.created_by', '=', 'users.id')->select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $targets = Package::select('id', 'name', 'total_dayes', 'hotel', 'transportation', 'total_package_cost', 'adult', 'children', 'created_at')->orderBy('id', 'desc');
 
         if (!empty($request->search_value)) {
@@ -42,6 +42,10 @@ class PackageEntryController extends Controller {
                         ->orWhere('total_package_cost', 'like', "%{$searchText}%")
                         ->orWhere('children', 'like', "%{$searchText}%");
             });
+        }
+
+        if (!empty($request->created_by)) {
+            $targets->where('created_by', $request->created_by);
         }
 
         if ($request->view == 'print') {
@@ -71,28 +75,21 @@ class PackageEntryController extends Controller {
         $data['title'] = 'Package List';
         $data['meta_tag'] = 'Package List, rafiq & sons';
         $data['meta_description'] = 'Package List, rafiq & sons';
-        return view('backEnd.package.index')->with(compact('data', 'targets'));
+        return view('backEnd.package.index')->with(compact('data', 'targets', 'users'));
     }
 
     public function create(Request $request) {
-
         $countries = ['' => __('lang.SELECT_COUNTRY')] + Country::select(DB::raw("CONCAT(name,' (',iso_code_2,')') as country_name"), 'id')->pluck('country_name', 'id')->toArray();
-
         $entryTypes = ['' => __('lang.SELECT_ENTRY_TYPE')] + EntryTypes::where('status', '1')->where('category_id', '4')->pluck('title', 'id')->toArray();
-
         $years = ['' => __('lang.SELECT_YEAR')] + Year::pluck('year', 'year')->toArray();
-
         $airports = ['' => __('lang.SELECT_AIRPORT')] + Airport::select(DB::raw("CONCAT(name,' (',countryCode,')') as name"), 'countryCode', 'code')->orderBy('countryCode')->pluck('name', 'name')->toArray();
 
         if (!empty($request->countryId) && !empty($request->typeId) && !empty($request->year)) {
             $type = explode(' ', $entryTypes[$request->typeId]);
             $year = $years[$request->year];
             $countryName = explode(' ', str_replace(array('(', ')'), '', $countries[$request->countryId]));
-
             $latestPassport = Package::select('id')->latest()->take(1)->first();
-
             $latestPassId = !empty($latestPassport->id) ? $latestPassport->id + 1 : '1';
-
             $customerCode = end($countryName) . '-' . $type[0] . '-' . $year . '-' . $latestPassId;
             return $customerCode;
         }
@@ -100,7 +97,6 @@ class PackageEntryController extends Controller {
         $data['title'] = 'Package Entry';
         $data['meta_tag'] = 'Package entry, rafiq & sons';
         $data['meta_description'] = 'Package entry, rafiq & sons';
-
         return view('backEnd.package.create', compact('data', 'countries', 'entryTypes', 'years', 'airports'));
     }
 
@@ -146,7 +142,17 @@ class PackageEntryController extends Controller {
         $target->total_package_cost = $request->total_package_cost;
         $target->note = $request->note;
         if ($target->save()) {
-            
+            $data = [
+                'issue_type' => 'package',
+                'issue_id' => $target->id,
+                'action' => 'create',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::log($data);
+
             $this->uploadFile($target->id, $request);
             Session::flash('success', __('lang.PACKAGE_ADDED_SUCCESSFULLY'));
             return redirect()->route('packageEntry.index');
@@ -248,7 +254,22 @@ class PackageEntryController extends Controller {
         $target->total_package_cost = $request->total_package_cost;
         $target->note = $request->note;
         if ($target->save()) {
-            $this->uploadImageForUpdate($target, $request);
+            $data = [
+                'issue_type' => 'package',
+                'issue_id' => $target->id,
+                'action' => 'update',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::log($data);
+
+            if (!empty($target->attachments->toArray())) {
+                $this->uploadImageForUpdate($target, $request);
+            } else {
+                $this->uploadFile($target->id, $request);
+            }
             Session::flash('success', __('lang.PACKAGE_UPDATED_SUCCESSFULLY'));
             return redirect()->route('packageEntry.index');
         }
@@ -257,6 +278,16 @@ class PackageEntryController extends Controller {
     public function destroy(Request $request) {
         $target = Package::findOrFail($request->id);
         if ($target->delete()) {
+            $data = [
+                'issue_type' => 'package',
+                'issue_id' => $target->id,
+                'action' => 'delete',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::log($data);
 //            $notes = Note::where('application_id', $request->id)->where('issue_id', '2')->delete();
             Session::flash('success', __('lang.PACKAGE_DELETED_SUCCESSFULLY'));
             return redirect()->route('packageEntry.index');
@@ -264,7 +295,7 @@ class PackageEntryController extends Controller {
     }
 
     public function transactionList(Request $request) {
-
+        $createdBy = ['' => __('lang.SELECT_CREATED_BY')] + User::join('transactions', 'transactions.created_by', '=', 'users.id')->select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->where('transactions.issue_id', 5)->pluck('name', 'id')->toArray();
         $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $transactionTypeArr = ['' => __('lang.SELECT_TR_TYPE'), 'in' => 'Cash In', 'out' => 'Cash Out'];
         $bankAccountArr = BankAccount::select(DB::raw("CONCAT(bank_name,' => ',account_name,' (',account_no,')') as bank_account"), 'id')->pluck('bank_account', 'id')->toArray();
@@ -330,6 +361,7 @@ class PackageEntryController extends Controller {
         $application_id = $request->id;
         $issue_id = '5';
         $searchFormRoute = 'packageEntry.filter';
+        $searchCreatedBy = 'packageEntry.createdBy';
         $transactionListOf = 'package-entry';
 
         $applicationDetails = Package::where('id', $request->id)->first();
@@ -339,16 +371,24 @@ class PackageEntryController extends Controller {
         $data['title'] = 'Transaction';
         $data['meta_tag'] = 'Transaction page, rafiq & sons';
         $data['meta_description'] = 'Transaction, rafiq & sons';
-        return view('backEnd.transaction.index')->with(compact('targets', 'issues', 'bankAccountArr', 'users', 'transactionTypeArr', 'data', 'application_id', 'total_transaction', 'total_in', 'total_out', 'total_profit', 'issue_id', 'applicationDetails', 'searchFormRoute', 'transactionListOf'));
+        return view('backEnd.transaction.index')->with(compact('targets', 'issues', 'bankAccountArr', 'users', 'transactionTypeArr', 'data', 'application_id', 'total_transaction', 'total_in', 'total_out', 'total_profit', 'issue_id', 'applicationDetails', 'searchFormRoute', 'transactionListOf', 'createdBy', 'searchCreatedBy'));
     }
 
     public function filter(Request $request) {
-        $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
+        if (isset($request->created_by)) {
+            $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value . '&created_by=' . $request->created_by;
+        } else {
+            $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
+        }
         return redirect('admin/package-entry/' . $request->id . '/transaction-list?' . $url);
     }
 
     public function packageFilter(Request $request) {
-        $url = 'filter=true' . '&search_value=' . $request->search_value;
+        if (isset($request->created_by)) {
+            $url = 'filter=true' . '&created_by=' . $request->created_by . '&search_value=' . $request->search_value;
+        } else {
+            $url = 'filter=true&search_value=' . $request->search_value;
+        }
         return redirect('admin/package-entry?' . $url);
     }
 
@@ -400,7 +440,7 @@ class PackageEntryController extends Controller {
     }
 
     public function uploadFile($applicationId, $request) {
-        
+
         if ($files = $request->file('doc_name')) {
             foreach ($files as $key => $file) {
                 $filePath = 'uploads/attachments/';
@@ -412,13 +452,30 @@ class PackageEntryController extends Controller {
                 $target->issue_type = 5;
                 $target->application_id = $applicationId;
                 $target->doc_name = $dbName;
-                $target->title = $raquest->title[$key] ?? '';
+                $target->title = $request->title[$key] ?? '';
                 $target->serial = $request->serial[$key] ?? 0;
                 $target->status = $request->status[$key] ?? 0;
                 $target->save();
             }
         }
         return true;
+    }
+
+    public function combineReport(Request $request) {
+        $applicationDetails = PackageApplication::select('customer_code', 'name', 'ticket_no')->where('id', $request->id)->first();
+        $invoices = Invoice::where('customer_code', $applicationDetails->customer_code)->where('issue_id', '4')->get();
+        $transactions = Transaction::where(['issue_id' => '4', 'application_id' => $request->id])->get();
+        $users = ['' => __('lang.SELECT_USER')] + User::select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
+ 
+
+        $application_id = $request->id;
+        $transactionListOf = 'ticket-entry';
+        $issue_id = '4';
+
+        $data['title'] = 'Combine Report';
+        $data['meta_tag'] = 'Combine Report page, rafiq & sons';
+        $data['meta_description'] = 'Combine Report, rafiq & sons';
+        return view('backEnd.report.combine_report')->with(compact('invoices', 'transactions','users' ,'data', 'application_id', 'issue_id', 'applicationDetails','transactionListOf'));
     }
 
 }

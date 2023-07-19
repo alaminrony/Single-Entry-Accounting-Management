@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\ServiceCharge;
+use App\Models\Invoice;
 use App\Models\Transaction;
 use Validator;
 
@@ -11,23 +13,25 @@ class ReceivableController extends Controller {
 
     public function index(Request $request) {
 
+//        echo "<pre>";print_r($request->all());exit;
+
         $customers = ['' => __('lang.SELECT_CUSTOMER')] + User::where('role_id', '4')->pluck('name', 'id')->toArray();
 
         $targets = User::select('id', 'name')->where('role_id', '4');
-        if (!empty($request->supplier_id)) {
+        if (!empty($request->customer_id)) {
             $targets = $targets->where('id', $request->customer_id);
         }
 
         $targets = $targets->paginate(5);
-        
+
         $data['title'] = 'Account Receivable';
         $data['meta_tag'] = 'Account Receivable, rafiq & sons';
         $data['meta_description'] = 'Account Receivable, rafiq & sons';
-        return view('backEnd.report.receivable.index')->with(compact('customers', 'targets','data'));
+        return view('backEnd.report.receivable.index')->with(compact('customers', 'targets', 'data'));
     }
 
     public function details(Request $request) {
-        
+
         $customer_id = $request->id;
 
         $targets = Transaction::join('issues', 'issues.id', '=', 'transactions.issue_id')
@@ -40,6 +44,8 @@ class ReceivableController extends Controller {
         }
         $targets = $targets->get();
 
+        $customerName = User::where('role_id', '4')->where('id', $customer_id)->select('name')->first();
+
         $bal = 0;
         foreach ($targets as $target) {
             if ($target->transaction_type == "in") {
@@ -50,13 +56,15 @@ class ReceivableController extends Controller {
                 $target->balance = $bal;
             }
         }
-        
-        if($request->print == true){
-             return view('backEnd.report.receivable.print')->with(compact('targets','customer_id'));
+
+        if ($request->print == true) {
+            return view('backEnd.report.receivable.print')->with(compact('targets', 'customer_id', 'customerName'));
         }
 
-        
-        return view('backEnd.report.receivable.details')->with(compact('targets', 'customer_id'));
+        $totalContract = ServiceCharge::where('agent_id', $customer_id)->sum('charge');
+        $totalInvoiced = Invoice::where('bill_to', $customer_id)->sum('total_amount');
+
+        return view('backEnd.report.receivable.details')->with(compact('targets', 'customer_id', 'customerName', 'totalContract', 'totalInvoiced'));
     }
 
     public function filter(Request $request) {

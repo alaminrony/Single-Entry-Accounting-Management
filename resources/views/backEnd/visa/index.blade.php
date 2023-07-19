@@ -9,16 +9,19 @@
                 <div class="col-sm-6">
                     <h1>@lang('lang.VISA_LIST')</h1>
                 </div>
+                @if(!empty($accessArr['visa'][15]))
                 <div class="col-sm-6">
                     <div class="float-right mr-2">
                         <a href="{{route('visaEntry.create')}}" class="btn btn-success"  title="@lang('lang.CREATE_VISA')"><i class="fa fa-plus-square"></i> @lang('lang.CREATE_VISA')</a>
                     </div>
                 </div>
+                @endif
             </div>
             @include('backEnd.layouts.message')
         </div><!-- /.container-fluid -->
     </section>
 
+    @if(!empty($accessArr['visa'][19]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'visaEntry.VisaFilter','method'=>'GET'])!!}
@@ -26,8 +29,46 @@
             <div class="row">
                 <div class="col-md-10 offset-md-1">
                     <div class="row">
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label>@lang('lang.EXPIRY_DATE'):</label>
+                                {!!Form::select('expiry_date',$expiryDateArr,Request::get('expiry_date'),['class'=>'select2 form-control','id'=>'expiry_date','width'=>'100%']) !!}
+                                @if($errors->has('expiry_date'))
+                                <span class="text-danger">{{$errors->first('expiry_date')}}</span>
+                                @endif
+                            </div>
+                        </div>
 
-                        <div class="col-3">
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label>@lang('lang.FROM_DATE'):</label>
+                                <div class="input-group date" id="fromDate" data-target-input="nearest">
+                                    <input type="text" name='from_date' class="form-control datetimepicker-input" data-target="#fromDate" value="{{Request::get('from_date')}}"/>
+                                    <div class="input-group-append" data-target="#fromDate" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                    </div>
+                                </div>
+                                @if($errors->has('from_date'))
+                                <span class="text-danger">{{$errors->first('from_date')}}</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label>@lang('lang.TO_DATE'):</label>
+                                <div class="input-group date" id="toDate" data-target-input="nearest">
+                                    <input type="text" name="to_date" class="form-control datetimepicker-input" data-target="#toDate" value="{{Request::get('to_date')}}"/>
+                                    <div class="input-group-append" data-target="#toDate" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                    </div>
+                                </div>
+                                @if($errors->has('to_date'))
+                                <span class="text-danger">{{$errors->first('to_date')}}</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="col-4">
                             <div class="form-group">
                                 <label>@lang('lang.TEXT'):</label>
                                 {!!Form::text('search_value',Request::get('search_value'),['class'=>'form-control','id'=>'search_value','width'=>'100%','placeholder'=>'Enter search keywords']) !!}
@@ -37,7 +78,19 @@
                             </div>
                         </div>
 
-                        <div class="col-3">
+                        @if(!empty($accessArr['visa'][103]))
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label>@lang('lang.CREATED_BY'):</label>
+                                {!!Form::select('created_by',$users,Request::get('created_by'),['class'=>'select2 form-control','id'=>'created_by','width'=>'100%']) !!}
+                                @if($errors->has('created_by'))
+                                <span class="text-danger">{{$errors->first('created_by')}}</span>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+
+                        <div class="col-4">
                             <div class="form-group">
                                 <label></label>
                                 <div class="input-group">
@@ -53,6 +106,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -61,11 +115,20 @@
                 <div class="col-md-12">
                     <div class="card card-secondary">
                         <div class="card-header">
-                            <h3 class="card-title">@lang('lang.VISA_LIST')</h3>
+                            <h3 class="card-title">@lang('lang.VISA_LIST') <span>({{$targets->total()}}) data found</span></h3>
+
                             <div class="float-right">
-                                <a href="{{url('admin/visa-entry?view=print')}}" class="btn btn-primary"  title="@lang('lang.PRINT')"><i class="fa fa-print"></i></a>
-                                <a href="{{url('admin/visa-entry?view=pdf')}}" class="btn btn-warning"  title="@lang('lang.PDF')"><i class="fa fa-file-pdf"></i></a>
-                                <a href="{{url('admin/visa-entry?view=excel')}}" class="btn btn-success"  title="@lang('lang.EXCEL')"><i class="fa fa-file-excel"></i></a>
+                                <?php
+                                $queryString = "&expiry_date=" . Request::get('expiry_date') .
+                                        "&created_by=" . Request::get('created_by') .
+                                        "&search_value=" . Request::get('search_value') .
+                                        "&from_date=" . Request::get('from_date') .
+                                        "&to_date=" . Request::get('to_date');
+                                ?>
+                                <a type="button" href="{{route('visaEntry.index')}}"  class="btn btn-primary">@lang('lang.BACK_TO_ALL_LIST')</a>
+<!--                                <a href="{{url('admin/visa-entry?view=print&filter=true'.$queryString)}}" class="btn btn-primary"  title="@lang('lang.PRINT')"><i class="fa fa-print"></i></a>
+                                <a href="{{url('admin/visa-entry?view=pdf&filter=true'.$queryString)}}" class="btn btn-warning"  title="@lang('lang.PDF')"><i class="fa fa-file-pdf"></i></a>-->
+                                <a href="{{url('admin/visa-entry?view=excel&filter=true'.$queryString)}}" class="btn btn-warning"  title="@lang('lang.EXCEL')"><i class="fa fa-file-excel"></i></a>
                             </div>
                         </div>
 
@@ -94,19 +157,43 @@
                                         <td>{{$target->name}}</td>
                                         <td>{{$target->passport_no}}</td>
                                         <td>{{$target->mobile_no}}</td>
-                                        <td width="20%">
-                                            <div style="float: left;margin-right:4px;">
+                                        <td width="25%">
+                                            <div class="btn-group">
+                                                @if(!empty($accessArr['invoice'][67]))
+                                                <a class="btn btn-primary btn-sm" title="@lang('lang.ADD_INVOICE')" href="{{route('invoice.create',1)}}"><i class="fas fa-file-invoice"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['invoice'][66]))
+                                                <a class="btn btn-secondary btn-sm" title="@lang('lang.INVOICE_LIST')" href="{{route('invoice.index',1)}}"><i class="fas fa-list"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['visa'][17]))
                                                 <a class="btn btn-success btn-sm" title="@lang('lang.VIEW_VISA')" href="{{route('visaEntry.view',$target->id)}}"><i class="fa fa-eye"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['visa'][16]))
                                                 <a class="btn btn-warning btn-sm"  title="@lang('lang.EDIT_VISA')" href="{{route('visaEntry.edit',$target->id)}}"><i class="fa fa-edit"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['visa'][20]))
                                                 <a type="button" class="btn btn-secondary btn-sm openCreateModal" data-id="{{$target->id}}" data-issue='1' data-toggle="modal" title="@lang('lang.TRANSACTION')" data-target="#viewCreateModal"><i class="fa fa-exchange-alt"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['visa'][21]))
                                                 <a href="{{route('visaEntry.transaction-list',$target->id)}}" class="btn btn-primary btn-sm"  title="@lang('lang.TRANSACTION_LIST')"><i class="fa fa-list"></i></a>
-                                            </div>
-                                            <div style="float: left;">
+                                                @endif
+
+                                                
+                                                <a href="{{route('visaEntry.combineReport',$target->id)}}" class="btn btn-secondary btn-sm"  title="@lang('lang.COMBINE_REPORT')"><i class="fa fa-list"></i></a>
+                                                
+
+                                                @if(!empty($accessArr['visa'][18]))
                                                 {!!Form::open(['route'=>['visaEntry.destroy',$target->id]])!!}
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm deleteBtn" title="@lang('lang.DELETE_VISA')"><i class="fa fa-trash"></i></button>
                                                 {!!Form::close()!!}
-                                            </div>  
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     @endforeach
@@ -161,6 +248,12 @@
 <script type="text/javascript">
     $(document).ready(function () {
         $('.select2').select2();
+    });
+    $('#fromDate').datetimepicker({
+        format: 'YYYY-MM-DD'
+    });
+    $('#toDate').datetimepicker({
+        format: 'YYYY-MM-DD'
     });
     $(document).on('click', '.openCreateModal', function () {
         var id = $(this).attr('data-id');
@@ -288,12 +381,6 @@
             });
         }
     });
-
-
-
-
-
-
 
     $(document).on('click', '#update', function () {
         var data = new FormData($('#updateFormData')[0]);
@@ -431,5 +518,7 @@
         }
 
     });
+
+
 </script>
 @endpush

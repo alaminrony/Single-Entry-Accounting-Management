@@ -356,7 +356,7 @@
                                         @if(!empty($target->ref_agent))
                                         <tr>
                                             <td><strong>@lang('lang.REF_AGENT')</strong> </td>
-                                            <td>{{$target->ref_agent}}</td>
+                                            <td>{{$users[$target->ref_agent] ?? ''}}</td>
                                         </tr>
                                         @endif
 
@@ -381,8 +381,6 @@
                                             <td><strong>@lang('lang.CREATED_AT')</strong> </td>
                                             <td>{{Helper::dateFormat($target->created_at)}}</td>
                                         </tr>
-
-
                                     </tbody>
                                 </table>
 

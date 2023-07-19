@@ -13,6 +13,9 @@
         </div><!-- /.container-fluid -->
     </section>
 
+   
+
+    @if(!empty($accessArr['report'][75]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'receivable.filter','method'=>'GET'])!!}
@@ -45,6 +48,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -70,10 +74,10 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    
+
                                     <?php $i = 0 ?>
                                     @foreach($targets as $target)
-                                    <?php $balanceArr = Helper::balanceCalculation($target->id);?>
+                                    <?php $balanceArr = Helper::balanceCalculation($target->id); ?>
                                     <?php $i++; ?>
                                     <tr>
                                         <td>{{$i}}</td>
@@ -82,7 +86,9 @@
                                         <td>{{$balanceArr['out_balances']}}</td>
                                         <td>{{number_format($balanceArr['payableBalance'],2)}}</td>
                                         <td>
-                                             <a class="btn btn-warning btn-sm" title="Details" href="{{route('receivable.details',$target->id)}}"><i class="fa fa-file"></i></a>
+                                            @if(!empty($accessArr['report'][76]))
+                                            <a class="btn btn-warning btn-sm" title="Details" href="{{route('receivable.details',$target->id)}}"><i class="fa fa-file"></i></a>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach

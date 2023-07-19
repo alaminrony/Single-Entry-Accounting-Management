@@ -309,7 +309,7 @@
                                                 @endforeach
                                                 @else
                                                 <tr class="numbar">
-                                                         <!--<td width='10%'><img id="blah0" class="img-thambnail" src="http://demo.kefuclav.com/assets/dist/img/products/product.png" alt="your image" height="70px" width="70px;"></td>-->
+                                                    <td width='10%'><img id="blah0" class="img-thambnail" src="{{asset('backend/dist/img/no_file.png')}}" alt="No file image" height="70px" width="70px;"></td>
                                                     <td><input type="file" name="doc_name[]"></td>
                                                     <td><input type="text" name="title[]" value="" placeholder="Enter Caption" class="form-control"></td>
                                                     <td><input type="number" name="serial[]" value="1" class="form-control" required></td>
@@ -464,7 +464,7 @@
 //        alert(i);return false;
         i++;
         $('#dynamic_field_file').append('<tr id="row' + i + '">' +
-                '<td><img id="blah' + i + '" class="img-thambnail" src="{{asset('backend / dist / img / file.jpg')}}" alt="your image" height="70px" width="70px;"></td>' +
+                '<td><img id="blah' + i + '" class="img-thambnail" src="{{asset('backend/dist/img/no_file.png')}}" alt="No file image" height="70px" width="70px;"></td>' +
                 '<td><input type="file" name="doc_name[' + i + ']" onchange="document.getElementById(`blah${i}`).src = window.URL.createObjectURL(this.files[0])"></td>' +
                 '<td><input type="text" name="title[' + i + ']" value="" placeholder="Enter Caption" class="form-control"></td>' +
                 '<td><input type="number" name="serial[' + i + ']" class="form-control" value="" required></td>' +

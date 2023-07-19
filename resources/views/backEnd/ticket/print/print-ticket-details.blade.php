@@ -63,7 +63,7 @@
                 @if(!empty($target->agent))
                 <tr>
                     <td><strong>@lang('lang.AGENT')</strong> </td>
-                    <td>{{$target->agent}}</td>
+                    <td>{{$users[$target->agent] ?? ''}}</td>
                 </tr>
                 @endif
 
@@ -106,7 +106,7 @@
                 @if(!empty($target->fly_type))
                 <tr>
                     <td><strong>@lang('lang.FLYING_TYPE')</strong> </td>
-                    <td>{{$target->fly_type == 'one_way' ? 'one way' : 'return'}}</td>
+                    <td>{{$flyingTypes[$target->fly_type] ?? ''}}</td>
                 </tr>
                 @endif
 

@@ -1,0 +1,1 @@
+ {!!Form::select('customer_code',$cusCode??'',old('customer_code'),['class'=>'form-control select2'])!!}

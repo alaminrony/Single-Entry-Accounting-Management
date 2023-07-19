@@ -9,16 +9,19 @@
                 <div class="col-sm-6">
                     <h1>@lang('lang.ISSUE')</h1>
                 </div>
+                @if(!empty($accessArr['issue'][86]))
                 <div class="col-sm-6">
                     <div class="float-right mr-2">
                         <a type="button" class="btn btn-success openCreateModal" data-toggle="modal" title="@lang('lang.VIEW_ISSUE')" data-target="#viewCreateModal"><i class="fa fa-plus-square"></i> Create issue</a>
                     </div>
                 </div>
+                @endif
             </div>
             @include('backEnd.layouts.message')
         </div><!-- /.container-fluid -->
     </section>
-    
+
+    @if(!empty($accessArr['issue'][88]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'head.filter','method'=>'GET'])!!}
@@ -52,6 +55,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -84,15 +88,20 @@
                                         <td>{{$target->issue_title}}</td>
                                         <td>{{Helper::dateFormat($target->created_at)}}</td>
                                         <td>
+                                            @if(!empty($accessArr['issue'][87]))
                                             <div style="float: left;margin-right:4px;">
                                                 <a type="button" class="btn btn-warning openEditModal" data-toggle="modal" title="@lang('lang.EDIT_ISSUE')" data-target="#viewEditModal" data-id="{{$target->id}}"><i class="fa fa-edit"></i></a>
                                             </div>
+                                            @endif
+                                            
+                                            @if(!empty($accessArr['issue'][89]))
                                             <div style="float: left;">
                                                 {!!Form::open(['route'=>['head.destroy',$target->id]])!!}
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger deleteBtn"><i class="fa fa-trash"></i></button>
                                                 {!!Form::close()!!}
-                                            </div>  
+                                            </div> 
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -187,7 +196,7 @@
                 $.ajax({
                     url: "{{route('head.edit')}}",
                     type: "post",
-                    data: {id : id},
+                    data: {id: id},
                     dataType: "json",
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -198,7 +207,7 @@
                 });
             }
         });
-        
+
         $(document).on('click', '#update', function () {
             var data = new FormData($('#editFormData')[0]);
             if (data != '') {

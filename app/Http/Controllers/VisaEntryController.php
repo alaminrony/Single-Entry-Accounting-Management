@@ -19,6 +19,7 @@ use App\Models\Issue;
 use App\Models\Transaction;
 use App\Models\Setting;
 use App\Models\DocumentAttachment;
+use App\Models\Invoice;
 use Session;
 use DB;
 use App\Helpers\Helper;
@@ -29,9 +30,13 @@ use PDF;
 class VisaEntryController extends Controller {
 
     public function index(Request $request) {
-
-        $banksArr = ['' => __('lang.SELECT_BANK')] + BankAccount::pluck('bank_name', 'id')->toArray();
-        $targets = VisaApplication::select('id', 'customer_code', 'name', 'passport_no', 'mobile_no', 'created_at')->orderBy('id', 'desc');
+        $users = ['' => __('lang.SELECT_USER')] + User::select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
+        $countries = Country::select(DB::raw("CONCAT(name,' (',iso_code_2,')') as country_name"), 'id')->pluck('country_name', 'id')->toArray();
+        $entryTypes = EntryTypes::where('status', '1')->where('category_id', '1')->pluck('title', 'id')->toArray();
+        $years = Year::pluck('year', 'year')->toArray();
+        $districts = District::orderBy('name')->pluck('name', 'id')->toArray();
+        $thanas = Thana::orderBy('name')->pluck('name', 'id')->toArray();
+        $targets = VisaApplication::select('*')->orderBy('id', 'desc');
 
         if (!empty($request->search_value)) {
             $searchText = $request->search_value;
@@ -42,6 +47,14 @@ class VisaEntryController extends Controller {
                         ->orWhere('father_name', 'like', "%{$searchText}%")
                         ->orWhere('mobile_no', 'like', "%{$searchText}%");
             });
+        }
+
+        if (!empty($request->expiry_date) && !empty($request->from_date) && !empty($request->to_date)) {
+            $targets = $targets->whereBetween($request->expiry_date, [$request->from_date . ' 00:00:00', $request->to_date . ' 23:59:59']);
+        }
+
+        if (!empty($request->created_by)) {
+            $targets->where('created_by', $request->created_by);
         }
 
         if ($request->view == 'print') {
@@ -61,21 +74,39 @@ class VisaEntryController extends Controller {
             $downLoadFileName = "$fileName.xlsx";
             $data['targets'] = $targets;
             $data['request'] = $request;
+            $data['countries'] = $countries;
+            $data['entryTypes'] = $entryTypes;
+            $data['years'] = $years;
+            $data['districts'] = $districts;
+            $data['thanas'] = $thanas;
+            $data['users'] = $users;
             return Excel::download(new ExcelExport($viewFile, $data), $downLoadFileName);
         }
-        $targets = $targets->paginate(5);
 
-//        echo "<pre>";        print_r($targets->toArray());exit;
+//       
+        $targets = $targets->paginate(10);
+
+        $expiryDateArr = ['' => __('lang.SELECT_EXPIRY_DATE')] + [
+            'created_at' => 'Created At',
+            'passport_expiry_date' => 'Passport expiry date',
+            'visa_expiry_date' => 'Visa expiry date',
+            'medical_expiry_date' => 'Medical expiry date',
+            'police_clearence_expiry_date' => 'Police Clearence expiry date',
+            'mofa_expiry_date' => 'Mofa expiry date',
+            'man_power_expiry_date' => 'Man Power expiry date',
+            'stamping_expiry_date' => 'Stamping expiry date',
+        ];
 
         $data['title'] = 'Visa List';
         $data['meta_tag'] = 'Visa List, rafiq & sons';
         $data['meta_description'] = 'Visa List, rafiq & sons';
 
-        return view('backEnd.visa.index')->with(compact('data', 'targets'));
+        return view('backEnd.visa.index')->with(compact('data', 'targets', 'users', 'expiryDateArr'));
     }
 
     public function create(Request $request) {
 
+        $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $countries = ['' => __('lang.SELECT_COUNTRY')] + Country::select(DB::raw("CONCAT(name,' (',iso_code_2,')') as country_name"), 'id')->pluck('country_name', 'id')->toArray();
 
         $entryTypes = ['' => __('lang.SELECT_ENTRY_TYPE')] + EntryTypes::where('status', '1')->where('category_id', '1')->pluck('title', 'id')->toArray();
@@ -88,16 +119,16 @@ class VisaEntryController extends Controller {
 
         $thanas = ['' => __('lang.SELECT_THANA')] + Thana::orderBy('name')->pluck('name', 'id')->toArray();
 
+//        echo "<pre>";print_r($countries);exit;
+
         if (!empty($request->countryId) && !empty($request->typeId) && !empty($request->year)) {
             $type = explode(' ', $entryTypes[$request->typeId]);
             $year = $years[$request->year];
             $countryName = explode(' ', str_replace(array('(', ')'), '', $countries[$request->countryId]));
-
-            $latestVisa = VisaApplication::select('id')->latest()->take(1)->first();
-
-            $latestVisaId = !empty($latestVisa->id) ? $latestVisa->id + 1 : '0';
-
+            $latestVisa = VisaApplication::where('country_id', $request->countryId)->count();
+            $latestVisaId = $latestVisa == 0 ? 1 : $latestVisa + 1;
             $customerCode = end($countryName) . '-' . $type[0] . '-' . $year . '-' . $latestVisaId;
+
             return $customerCode;
         }
 
@@ -105,7 +136,7 @@ class VisaEntryController extends Controller {
         $data['meta_tag'] = 'visa entry, rafiq & sons';
         $data['meta_description'] = 'visa entry, rafiq & sons';
 
-        return view('backEnd.visa.create', compact('data', 'countries', 'entryTypes', 'years', 'airports', 'districts', 'thanas'));
+        return view('backEnd.visa.create', compact('data', 'countries', 'entryTypes', 'years', 'airports', 'districts', 'thanas', 'users'));
     }
 
     public function generateCusCode(Request $request) {
@@ -194,6 +225,7 @@ class VisaEntryController extends Controller {
         $target->medical_expiry_date = $request->medical_expiry_date;
         $target->police_clearence_recieve_date = $request->police_clearence_recieve_date;
         $target->police_clearence_expiry_date = $request->police_clearence_expiry_date;
+        $target->police_reference_no = $request->police_reference_no;
         $target->mofa_no = $request->mofa_no;
         $target->mofa_date = $request->mofa_date;
         $target->mofa_expiry_date = $request->mofa_expiry_date;
@@ -215,6 +247,17 @@ class VisaEntryController extends Controller {
         $target->ref_agent = $request->ref_agent;
         $target->other_information = $request->other_information;
         if ($target->save()) {
+            $data = [
+                'issue_type' => 'visa',
+                'issue_id' => $target->id,
+                'action' => 'create',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+//            echo "<pre>";print_r($data);exit;
+            Helper::log($data);
             if (!empty($request->note)) {
                 $notes = new Note;
                 $notes->application_id = $target->id;
@@ -241,7 +284,7 @@ class VisaEntryController extends Controller {
                 $target->issue_type = 1;
                 $target->application_id = $applicationId;
                 $target->doc_name = $dbName;
-                $target->title = $raquest->title[$key] ?? '';
+                $target->title = $request->title[$key] ?? '';
                 $target->serial = $request->serial[$key] ?? 0;
                 $target->status = $request->status[$key] ?? 0;
                 $target->save();
@@ -252,7 +295,7 @@ class VisaEntryController extends Controller {
 
     public function view(Request $request) {
         $target = VisaApplication::with('attachments')->findOrFail($request->id);
-
+        $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $notes = Note::where('application_id', $request->id)->where('issue_id', '1')->get();
 //        echo "<pre>";print_r($target->toArray());exit;
 
@@ -288,16 +331,18 @@ class VisaEntryController extends Controller {
             $data['districts'] = $districts;
             $data['thanas'] = $thanas;
             $data['notes'] = $notes;
+            $data['users'] = $users;
             return Excel::download(new ExcelExport($viewFile, $data), $downLoadFileName);
         }
 
         $data['title'] = 'View Visa Details';
         $data['meta_tag'] = 'View Visa Details, rafiq & sons';
         $data['meta_description'] = 'View Visa Details, rafiq & sons';
-        return view('backEnd.visa.view')->with(compact('target', 'data', 'countries', 'entryTypes', 'years', 'districts', 'thanas', 'notes'));
+        return view('backEnd.visa.view')->with(compact('target', 'data', 'countries', 'entryTypes', 'years', 'districts', 'thanas', 'notes', 'users'));
     }
 
     public function edit(Request $request) {
+        $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
 
         $target = VisaApplication::with('attachments')->findOrFail($request->id);
 
@@ -318,13 +363,11 @@ class VisaEntryController extends Controller {
         $data['title'] = 'Edit Visa';
         $data['meta_tag'] = 'Edit Visa, rafiq & sons';
         $data['meta_description'] = 'Edit Visa, rafiq & sons';
-        return view('backEnd.visa.edit')->with(compact('target', 'data', 'countries', 'entryTypes', 'years', 'districts', 'thanas', 'notes', 'airports'));
+        return view('backEnd.visa.edit')->with(compact('target', 'data', 'countries', 'entryTypes', 'years', 'districts', 'thanas', 'notes', 'airports', 'users'));
     }
 
     public function update(Request $request) {
-//        echo "<pre>";
-//        print_r($request->all());
-//        exit;
+//        
         $rules = [
             'country_id' => 'required',
             'type_id' => 'required',
@@ -375,7 +418,11 @@ class VisaEntryController extends Controller {
             return redirect()->route('visaEntry.edit', $request->id)->withInput()->withErrors($validator);
         }
 
-        $target = VisaApplication::findOrFail($request->id);
+        $target = VisaApplication::with('attachments')->findOrFail($request->id);
+
+//        echo "<pre>";
+//        print_r($target->attachments);
+//        exit;
         $target->country_id = $request->country_id;
         $target->type_id = $request->type_id;
         $target->year = $request->year;
@@ -402,6 +449,8 @@ class VisaEntryController extends Controller {
         $target->medical_expiry_date = $request->medical_expiry_date;
         $target->police_clearence_recieve_date = $request->police_clearence_recieve_date;
         $target->police_clearence_expiry_date = $request->police_clearence_expiry_date;
+        $target->police_clearence_expiry_date = $request->police_clearence_expiry_date;
+        $target->police_reference_no = $request->police_reference_no;
         $target->mofa_no = $request->mofa_no;
         $target->mofa_date = $request->mofa_date;
         $target->mofa_expiry_date = $request->mofa_expiry_date;
@@ -423,6 +472,16 @@ class VisaEntryController extends Controller {
         $target->ref_agent = $request->ref_agent;
         $target->other_information = $request->other_information;
         if ($target->save()) {
+            $data = [
+                'issue_type' => 'visa',
+                'issue_id' => $target->id,
+                'action' => 'update',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::log($data);
             if (count($request->note) > 0) {
                 $notes = Note::where('application_id', $target->id)->where('issue_id', '1')->delete();
                 $noteData = [];
@@ -437,7 +496,13 @@ class VisaEntryController extends Controller {
                 }
                 Note::insert($noteData);
             }
-            $this->uploadImageForUpdate($target, $request);
+
+            if (!empty($target->attachments->toArray())) {
+                $this->uploadImageForUpdate($target, $request);
+            } else {
+                $this->uploadFile($target->id, $request);
+            }
+
             Session::flash('success', __('lang.VISA_UPDATED_SUCCESSFULLY'));
             return redirect()->route('visaEntry.index');
         }
@@ -493,6 +558,17 @@ class VisaEntryController extends Controller {
     public function destroy(Request $request) {
         $target = VisaApplication::findOrFail($request->id);
         if ($target->delete()) {
+            $data = [
+                'issue_type' => 'visa',
+                'issue_id' => $target->id,
+                'action' => 'delete',
+                'user_id' => \Auth::id(),
+                'ip_address' => request()->ip(),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            Helper::log($data);
+
             $notes = Note::where('application_id', $request->id)->where('issue_id', '1')->delete();
             Session::flash('success', __('lang.VISA_DELETED_SUCCESSFULLY'));
             return redirect()->route('visaEntry.index');
@@ -501,10 +577,11 @@ class VisaEntryController extends Controller {
 
     public function transactionList(Request $request) {
 //       echo "<pre>";print_r($request->all());exit;
+        $createdBy = ['' => __('lang.SELECT_CREATED_BY')] + User::join('transactions', 'transactions.created_by', '=', 'users.id')->select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->where('transactions.issue_id', 1)->pluck('name', 'id')->toArray();
         $users = ['' => __('lang.SELECT_USER')] + User::join('user_roles', 'user_roles.id', 'users.role_id')->select(DB::raw("CONCAT(users.name,' (',user_roles.role_name,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
         $transactionTypeArr = ['' => __('lang.SELECT_TR_TYPE'), 'in' => 'Cash In', 'out' => 'Cash Out'];
         $bankAccountArr = BankAccount::select(DB::raw("CONCAT(bank_name,' => ',account_name,' (',account_no,')') as bank_account"), 'id')->pluck('bank_account', 'id')->toArray();
-        $issues = ['1' => 'Visa', '2' => 'Passport'];
+        $issues = Issue::pluck('issue_title', 'id')->toArray();
 
         $total_transaction = Transaction::where('application_id', $request->id)->where('issue_id', '1')->sum('amount');
         $total_in = Transaction::where('application_id', $request->id)->where('issue_id', '1')->where('transaction_type', 'in')->sum('amount');
@@ -525,6 +602,10 @@ class VisaEntryController extends Controller {
                 $query->where('cheque_no', 'like', "%{$searchText}%")
                         ->orWhere('amount', 'like', "%{$searchText}%");
             });
+        }
+
+        if (!empty($request->created_by)) {
+            $targets = $targets->where('created_by', $request->created_by);
         }
 
         if ($request->view == 'print') {
@@ -559,6 +640,7 @@ class VisaEntryController extends Controller {
         $transactionListOf = 'visa-entry';
         $issue_id = '1';
         $searchFormRoute = 'visaEntry.filter';
+        $searchCreatedBy = 'visaEntry.createdBy';
         $applicationDetails = VisaApplication::select('customer_code', 'name', 'passport_no')->where('id', $request->id)->first();
 
 //        echo "<pre>";print_r($applicationDetails->toArray());exit;
@@ -566,17 +648,58 @@ class VisaEntryController extends Controller {
         $data['title'] = 'Transaction';
         $data['meta_tag'] = 'Transaction page, rafiq & sons';
         $data['meta_description'] = 'Transaction, rafiq & sons';
-        return view('backEnd.transaction.index')->with(compact('targets', 'issues', 'bankAccountArr', 'users', 'transactionTypeArr', 'data', 'application_id', 'total_transaction', 'total_in', 'total_out', 'total_profit', 'issue_id', 'applicationDetails', 'searchFormRoute', 'transactionListOf'));
+        return view('backEnd.transaction.index')->with(compact('targets', 'issues', 'bankAccountArr', 'users', 'transactionTypeArr', 'data', 'application_id', 'total_transaction', 'total_in', 'total_out', 'total_profit', 'issue_id', 'applicationDetails', 'searchFormRoute', 'transactionListOf', 'createdBy', 'searchCreatedBy'));
     }
 
     public function filter(Request $request) {
-        $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
+
+        if (isset($request->created_by)) {
+            $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value . '&created_by=' . $request->created_by;
+        } else {
+            $url = 'user_id=' . $request->user_id . '&transaction_type=' . $request->transaction_type . '&search_value=' . $request->search_value;
+        }
+
         return redirect('admin/visa-entry/' . $request->id . '/transaction-list?' . $url);
     }
 
     public function VisaFilter(Request $request) {
-        $url = 'filter=true' . '&search_value=' . $request->search_value;
+
+        $rules = [
+            'from_date' => 'required_with:to_date',
+            'to_date' => 'required_with:from_date',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withInput()->withErrors($validator);
+        }
+
+        if (isset($request->created_by)) {
+            $url = 'filter=true' . '&expiry_date=' . $request->expiry_date . '&created_by=' . $request->created_by . '&search_value=' . $request->search_value . '&from_date=' . $request->from_date . '&to_date=' . $request->to_date;
+        } else {
+            $url = 'filter=true' . '&expiry_date=' . $request->expiry_date . '&search_value=' . $request->search_value . '&from_date=' . $request->from_date . '&to_date=' . $request->to_date;
+        }
         return redirect('admin/visa-entry?' . $url);
+    }
+
+    public function combineReport(Request $request) {
+        $applicationDetails = VisaApplication::select('customer_code', 'name', 'passport_no')->where('id', $request->id)->first();
+        $invoices = Invoice::where('customer_code', $applicationDetails->customer_code)->where('issue_id', '1')->get();
+        $transactions = Transaction::where(['issue_id' => '1', 'application_id' => $request->id])->get();
+        $users = ['' => __('lang.SELECT_USER')] + User::select(DB::raw("CONCAT(users.name,' (',users.phone,')') as name"), 'users.id as id')->pluck('name', 'id')->toArray();
+ 
+
+        $application_id = $request->id;
+        $transactionListOf = 'visa-entry';
+        $issue_id = '1';
+        $searchFormRoute = 'visaEntry.filter';
+        $searchCreatedBy = 'visaEntry.createdBy';
+
+        $data['title'] = 'Transaction';
+        $data['meta_tag'] = 'Transaction page, rafiq & sons';
+        $data['meta_description'] = 'Transaction, rafiq & sons';
+        return view('backEnd.report.combine_report')->with(compact('invoices', 'transactions','users' ,'data', 'application_id', 'issue_id', 'applicationDetails', 'searchFormRoute', 'transactionListOf', 'searchCreatedBy'));
     }
 
 }

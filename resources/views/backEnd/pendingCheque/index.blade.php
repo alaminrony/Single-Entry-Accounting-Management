@@ -14,6 +14,7 @@
         </div><!-- /.container-fluid -->
     </section>
 
+    @if(!empty($accessArr['bank'][64]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'pendingCheque.filter','method'=>'GET'])!!}
@@ -65,6 +66,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -108,14 +110,19 @@
                                             </td>
                                             <td>{{Helper::dateFormat($target->created_at)}}</td>
                                             <td width='10%'>
+
                                                 <div style="float: left;margin-right:4px;">
                                                     @if( $target->status == '0')
-                                                    <a class="btn btn-success btn-sm approveCheque" data-id="{{$target->id}}" title="@lang('lang.APPROVE_CHEQUE')"><i class="fa fa-check"></i>
-                                                    </a>
 
-                                                    <a class="btn btn-danger btn-sm deleteCheque" data-id="{{$target->id}}" title="@lang('lang.APPROVE_CHEQUE')"><i class="fa fa-trash"></i>
-                                                    </a>
-                                                     @endif
+                                                    @if(!empty($accessArr['bank'][63]))
+                                                    <a class="btn btn-success btn-sm approveCheque" data-id="{{$target->id}}" title="@lang('lang.APPROVE_CHEQUE')"><i class="fa fa-check"></i></a>
+                                                    @endif
+                                                    
+                                                    @if(!empty($accessArr['bank'][65]))
+                                                    <a class="btn btn-danger btn-sm deleteCheque" data-id="{{$target->id}}" title="@lang('lang.DELETE')"><i class="fa fa-trash"></i></a>
+                                                    @endif
+                                                    
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>

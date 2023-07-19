@@ -40,11 +40,28 @@
             <thead>
                 <tr>
                     <th>SL</th>
-                    <th>@lang('lang.CREATED_AT')</th>
                     <th>@lang('lang.CUSTOMER_CODE')</th>
+                    <th>@lang('lang.COUNTRY')</th>
+                    <th>@lang('lang.ENTRY_TYPE')</th>
+                    <th>@lang('lang.YEAR')</th>
                     <th>@lang('lang.NAME')</th>
                     <th>@lang('lang.PASSPORT_NO')</th>
+                    <th>@lang('lang.FAW')</th>
+                    <th>@lang('lang.PASSPORT_ISSUE_DATE')</th>
+                    <th>@lang('lang.PASSPORT_RECEIVE_DATE')</th>
+                    <th>@lang('lang.PASSPORT_EXPIRY_DATE')</th>
+                    <th>@lang('lang.SEND_DATE')</th>
+                    <th>@lang('lang.VILLAGE')</th>
+                    <th>@lang('lang.POST')</th>
+                    <th>@lang('lang.POLICE_STATION')</th>
+                    <th>@lang('lang.DISTRICT')</th>
+                    <th>@lang('lang.PROFESSION')</th>
                     <th>@lang('lang.MOBILE_NO')</th>
+                    <th>@lang('lang.DELIVERY_DATE')</th>
+                    <th>@lang('lang.DATE_OF_BIRTH')</th>
+                    <th>@lang('lang.NID')</th>
+                    <th>@lang('lang.OTHER_INFORMATION')</th>
+                    <th>@lang('lang.CREATED_AT')</th>
                 </tr>
             </thead>
             <tbody>
@@ -53,11 +70,27 @@
                 @foreach($targets as $target)
                 <tr>
                     <td>{{++$i}}</td>
+                    <td>{{$target->customer_code ?? ''}}</td>
+                    <td>{{$countries[$target->country_id] ?? ''}}</td>
+                    <td>{{$entryTypes[$target->type_id] ?? ''}}</td>
+                    <td>{{$target->year ?? ''}}</td>
+                    <td>{{$target->name?? ''}}</td>
+                    <td>{{$target->passport_no?? ''}}</td>
+                    <td>{{$target->father_name ?? ''}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_issue_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_recieve_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_expiry_date)}}</td>
+                    <td>{{Helper::dateFormat2($target->passport_send_date)}}</td>
+                    <td>{{$target->village ?? ''}}</td>
+                    <td>{{$target->post_office ?? ''}}</td>
+                    <td>{{$thanas[$target->police_station]??''}}</td>
+                    <td>{{$districts[$target->district]??''}}</td>
+                    <td>{{$target->profession ?? ''}}</td>
+                    <td>{{$target->mobile_no ?? ''}}</td>
+                    <td>{{Helper::dateFormat2($target->dob)}}</td>
+                    <td>{{$target->nid_no ?? ''}}</td>
+                    <td>{{$target->other_information ?? ''}}</td>
                     <td>{{Helper::dateFormat($target->created_at)}}</td>
-                    <td>{{$target->customer_code}}</td>
-                    <td>{{$target->name}}</td>
-                    <td>{{$target->passport_no}}</td>
-                    <td>{{$target->mobile_no}}</td>
                 </tr>
                 @endforeach
                 @else
@@ -65,7 +98,7 @@
                 @endif
             </tbody>
         </table>
-        <!--Laravel Excel not supported  body & other tags, only Table tag accepted-->
+        <!--Laravel Excel does not supported  body & other tags, only Table tag accepted-->
 
 
         @if($request->view == 'print' || $request->view == 'pdf')

@@ -9,16 +9,19 @@
                 <div class="col-sm-6">
                     <h1>@lang('lang.TICKET_LIST')</h1>
                 </div>
+                @if(!empty($accessArr['ticket'][39]))
                 <div class="col-sm-6">
                     <div class="float-right mr-2">
                         <a href="{{route('ticketEntry.create')}}" class="btn btn-success"  title="@lang('lang.CREATE_MEDICAL')"><i class="fa fa-plus-square"></i> @lang('lang.CREATE_TICKET')</a>
                     </div>
                 </div>
+                @endif
             </div>
             @include('backEnd.layouts.message')
         </div><!-- /.container-fluid -->
     </section>
 
+    @if(!empty($accessArr['ticket'][43]))
     <section class="content">
         <div class="container-fluid">
             {!!Form::open(['route'=>'ticketEntry.ticketFilter','method'=>'GET'])!!}
@@ -26,6 +29,44 @@
             <div class="row">
                 <div class="col-md-10 offset-md-1">
                     <div class="row">
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label>@lang('lang.EXPIRY_DATE'):</label>
+                                {!!Form::select('expiry_date',$expiryDateArr,Request::get('expiry_date'),['class'=>'select2 form-control','id'=>'expiry_date','width'=>'100%']) !!}
+                                @if($errors->has('expiry_date'))
+                                <span class="text-danger">{{$errors->first('expiry_date')}}</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label>@lang('lang.FROM_DATE'):</label>
+                                <div class="input-group date" id="fromDate" data-target-input="nearest">
+                                    <input type="text" name='from_date' class="form-control datetimepicker-input" data-target="#fromDate" value="{{Request::get('from_date')}}"/>
+                                    <div class="input-group-append" data-target="#fromDate" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                    </div>
+                                </div>
+                                @if($errors->has('from_date'))
+                                <span class="text-danger">{{$errors->first('from_date')}}</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label>@lang('lang.TO_DATE'):</label>
+                                <div class="input-group date" id="toDate" data-target-input="nearest">
+                                    <input type="text" name="to_date" class="form-control datetimepicker-input" data-target="#toDate" value="{{Request::get('to_date')}}"/>
+                                    <div class="input-group-append" data-target="#toDate" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                    </div>
+                                </div>
+                                @if($errors->has('to_date'))
+                                <span class="text-danger">{{$errors->first('to_date')}}</span>
+                                @endif
+                            </div>
+                        </div>
                         <div class="col-3">
                             <div class="form-group">
                                 <label>@lang('lang.TEXT'):</label>
@@ -35,6 +76,18 @@
                                 @endif
                             </div>
                         </div>
+
+                        @if(!empty($accessArr['ticket'][106]))
+                        <div class="col-3">
+                            <div class="form-group">
+                                <label>@lang('lang.CREATED_BY'):</label>
+                                {!!Form::select('created_by',$users,Request::get('created_by'),['class'=>'select2 form-control','id'=>'created_by','width'=>'100%']) !!}
+                                @if($errors->has('created_by'))
+                                <span class="text-danger">{{$errors->first('created_by')}}</span>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
 
                         <div class="col-3">
                             <div class="form-group">
@@ -52,6 +105,7 @@
             {!!Form::close()!!}
         </div>
     </section>
+    @endif
 
     <!-- Main content -->
     <section class="content">
@@ -62,9 +116,17 @@
                         <div class="card-header">
                             <h3 class="card-title">@lang('lang.TICKET_LIST')</h3>
                             <div class="float-right">
-                                <a href="{{url('admin/ticket-entry?view=print')}}" class="btn btn-primary"  title="@lang('lang.PRINT')"><i class="fa fa-print"></i></a>
-                                <a href="{{url('admin/ticket-entry?view=pdf')}}" class="btn btn-warning"  title="@lang('lang.PDF')"><i class="fa fa-file-pdf"></i></a>
-                                <a href="{{url('admin/ticket-entry?view=excel')}}" class="btn btn-success"  title="@lang('lang.EXCEL')"><i class="fa fa-file-excel"></i></a>
+                                <?php
+                                $queryString = "&expiry_date=" . Request::get('expiry_date') .
+                                        "&created_by=" . Request::get('created_by') .
+                                        "&search_value=" . Request::get('search_value') .
+                                        "&from_date=" . Request::get('from_date') .
+                                        "&to_date=" . Request::get('to_date');
+                                ?>
+                                <a type="button" href="{{route('ticketEntry.index')}}"  class="btn btn-primary">@lang('lang.BACK_TO_ALL_LIST')</a>
+<!--                                <a href="{{url('admin/ticket-entry?view=print&filter=true'.$queryString)}}" class="btn btn-primary"  title="@lang('lang.PRINT')"><i class="fa fa-print"></i></a>
+                                <a href="{{url('admin/ticket-entry?view=pdf&filter=true'.$queryString)}}" class="btn btn-warning"  title="@lang('lang.PDF')"><i class="fa fa-file-pdf"></i></a>-->
+                                <a href="{{url('admin/ticket-entry?view=excel&filter=true'.$queryString)}}" class="btn btn-warning"  title="@lang('lang.EXCEL')"><i class="fa fa-file-excel"></i></a>
                             </div>
                         </div>
 
@@ -92,17 +154,40 @@
                                         <td>{{$target->name}}</td>
                                         <td>{{$target->ticket_no}}</td>
                                         <td width="20%">
-                                            <div style="float: left;margin-right:4px;">
+                                            <div class="btn-group">
+                                                @if(!empty($accessArr['invoice'][67]))
+                                                <a class="btn btn-primary btn-sm" title="@lang('lang.ADD_INVOICE')" href="{{route('invoice.create',4)}}"><i class="fas fa-file-invoice"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['invoice'][66]))
+                                                <a class="btn btn-secondary btn-sm" title="@lang('lang.INVOICE_LIST')" href="{{route('invoice.index',4)}}"><i class="fas fa-list"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['ticket'][41]))
                                                 <a class="btn btn-success btn-sm" title="@lang('lang.VIEW_TICKET')"  href="{{route('ticketEntry.view',$target->id)}}"><i class="fa fa-eye"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['ticket'][40]))
                                                 <a class="btn btn-warning btn-sm" title="@lang('lang.EDIT_TICKET')"  href="{{route('ticketEntry.edit',$target->id)}}"><i class="fa fa-edit"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['ticket'][44]))
                                                 <a type="button" class="btn btn-secondary btn-sm openCreateModal" data-id="{{$target->id}}" data-issue="4" data-toggle="modal" title="@lang('lang.TRANSACTION')" data-target="#viewCreateModal"><i class="fa fa-exchange-alt"></i></a>
+                                                @endif
+
+                                                @if(!empty($accessArr['ticket'][45]))
                                                 <a href="{{route('ticketEntry.transaction-list',$target->id)}}" class="btn btn-primary btn-sm"  title="@lang('lang.TRANSACTION_LIST')"><i class="fa fa-list"></i></a>
-                                            </div>
-                                            <div style="float: left;">
+                                                @endif
+                                                
+                                                <a href="{{route('ticketEntry.combineReport',$target->id)}}" class="btn btn-secondary btn-sm"  title="@lang('lang.COMBINE_REPORT')"><i class="fa fa-list"></i></a>
+
+                                                <a type="button" class="btn btn-secondary btn-sm openOptionCreateModal" data-id="{{$target->id}}" data-issue="4" data-toggle="modal"  title="@lang('lang.OTHER_OPTION')" data-target="#viewOptionCreateModal"><i class="fa fa-cog"></i></a>
+                                                @if(!empty($accessArr['ticket'][42]))
                                                 {!!Form::open(['route'=>['ticketEntry.destroy',$target->id]])!!}
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm deleteBtn" title="@lang('lang.DELETE_MEDICAL')"><i class="fa fa-trash"></i></button>
+                                                <button type="submit" class="btn btn-danger btn-sm deleteBtn" title="@lang('lang.DELETE_TICKET')"><i class="fa fa-trash"></i></button>
                                                 {!!Form::close()!!}
+                                                @endif
                                             </div>  
                                         </td>
                                     </tr>
@@ -132,12 +217,7 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="viewUserCreateModal" tabindex="-1" role="basic" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div id="createModalShowData">
-        </div>
-    </div>
-</div>
+
 
 <div class="modal fade" id="viewListModal" tabindex="-1" role="basic" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -153,11 +233,31 @@
     </div>
 </div>
 
+<div class="modal fade" id="viewOptionCreateModal" tabindex="-1" role="basic" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div id="showOptionCreateData">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="viewUserCreateModal" tabindex="-1" role="basic" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div id="createModalShowData">
+        </div>
+    </div>
+</div>
+
 @endsection
 @push('script')
 <script type="text/javascript">
     $(document).ready(function () {
         $('.select2').select2();
+    });
+    $('#fromDate').datetimepicker({
+        format: 'YYYY-MM-DD'
+    });
+    $('#toDate').datetimepicker({
+        format: 'YYYY-MM-DD'
     });
 
     $(document).on('change', '#ticket_type', function () {
@@ -172,6 +272,26 @@
 
         } else if (ticketType == 'refund') {
             $('#refundIssueField').show();
+        }
+    });
+
+    $(document).on('click', '.openOptionCreateModal', function () {
+        var id = $(this).attr('data-id');
+        if (id != '') {
+            $.ajax({
+                url: "{{route('ticketEntry.optionCreate')}}",
+                type: "post",
+                data: {id: id},
+                dataType: "json",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (data) {
+                    $('#showOptionCreateData').html(data.data);
+                    $('.select2').select2();
+                    $('#User').select2();
+                }
+            });
         }
     });
 
@@ -298,12 +418,6 @@
             });
         }
     });
-
-
-
-
-
-
 
     $(document).on('click', '#update', function () {
         var data = new FormData($('#updateFormData')[0]);

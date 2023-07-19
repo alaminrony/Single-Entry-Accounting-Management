@@ -79,14 +79,16 @@
     {!!Form::close()!!}
 </div>
 
-<script type="text/javascript">
-
+<script>
     $(document).on('click', '.toggle-password', function () {
         $('#hideShowIcon').toggleClass("fa-eye fa-eye-slash");
         var passType = $("#password");
         passType.attr('type') === 'password' ? passType.attr('type', 'text') : passType.attr('type', 'password');
     });
 </script>
+
+
+
 
 
 
