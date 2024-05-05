@@ -101,7 +101,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth']], function () {
     Route::post('service-charge/store', 'ServiceChargeController@store')->name('serviceCharge.store');
     Route::post('service-charge/update', 'ServiceChargeController@update')->name('serviceCharge.update');
 
->>>>>>> a601c08e8a243d04fbdde6221b8b12d46d699e66
+
     Route::get('myprofile', 'UserController@myprofile')->name('my.profile');
     Route::post('myprofile/edit', 'UserController@myprofileEdit')->name('my.profile.edit');
 
@@ -169,16 +169,13 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'acl']], function ()
     Route::get('account-receivable/{id}/details', 'ReceivableController@details')->name('receivable.details');
     Route::get('account-receivable/filter', 'ReceivableController@detailsFilter')->name('receivable.detailsFilter');
 
-<<<<<<< HEAD
 
-
-=======
     //Report for service contract
     Route::get('party-ledger-list', 'ServiceContractController@index')->name('serviceContract.index');
     Route::get('party-ledger-list-filter', 'ServiceContractController@filter')->name('serviceContract.filter');
     Route::get('party-ledger-list/{id}/details', 'ServiceContractController@details')->name('serviceContract.details');
     Route::get('party-ledger-list/filter', 'ServiceContractController@detailsFilter')->name('serviceContract.detailsFilter');
->>>>>>> a601c08e8a243d04fbdde6221b8b12d46d699e66
+
 
     //Settings
     Route::get('setting', 'SettingController@index')->name('setting.index');
@@ -228,10 +225,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'acl']], function ()
     Route::get('ticket-entry/{id}/transaction-list', 'TicketEntryController@transactionList')->name('ticketEntry.transaction-list');
     Route::get('ticket-entry/{id}/filter', 'TicketEntryController@filter')->name('ticketEntry.filter');
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a601c08e8a243d04fbdde6221b8b12d46d699e66
     //Ticket Management
     Route::get('package-entry', 'PackageEntryController@index')->name('packageEntry.index');
     Route::get('package-entry-filter', 'PackageEntryController@packageFilter')->name('packageEntry.packageFilter');
@@ -249,11 +243,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'acl']], function ()
     Route::post('voucher/edit', 'TransactionController@edit')->name('transaction.edit');
     Route::delete('voucher/{id}/delete', 'TransactionController@destroy')->name('transaction.destroy');
 
-<<<<<<< HEAD
-     // All Transaction List
-=======
-    // All Transaction List
->>>>>>> a601c08e8a243d04fbdde6221b8b12d46d699e66
+
     Route::get('report-transaction-list', 'ReportController@transactionList')->name('report.transactionList');
     Route::get('report-transaction-filter', 'ReportController@filter')->name('report.filter');
 
